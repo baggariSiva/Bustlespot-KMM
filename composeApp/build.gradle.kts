@@ -88,6 +88,15 @@ kotlin {
 //            implementation(libs.library.base)
             implementation(libs.coroutines.extensions)
             implementation(libs.stately.common) // Needed by SQLDelight
+
+            // Geocoding
+            implementation(libs.compass.geocoder)
+            implementation(libs.compass.geocoder.mobile)
+
+            // Geolocation
+            implementation(libs.compass.geolocation)
+            implementation(libs.compass.geolocation.mobile)
+            api("io.github.mirzemehdi:kmpnotifier:1.5.1")
         }
 
         commonTest.dependencies {
