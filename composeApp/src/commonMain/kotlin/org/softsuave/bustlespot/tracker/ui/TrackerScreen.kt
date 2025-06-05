@@ -467,6 +467,12 @@ fun TrackerScreen(
                                 lastSyncTime = formatEpochToTime(lastSyncTime)
                             )
                         }
+                        item {
+                            Text(
+                                "Current Location:\n $locationInfo",
+                                modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
+                            )
+                        }
                     }
                 }
             }

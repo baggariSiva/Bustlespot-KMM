@@ -52,7 +52,7 @@ class LocationViewModel() : ViewModel() {
                             checkGeoFence(Geocode(location.latitude, location.longitude, ""))
                         }
                         _locationInfo.value =
-                            "Latitude: ${location.latitude}, Longitude: ${location.longitude}"
+                            "Latitude: ${location.latitude} \nLongitude: ${location.longitude}"
                     }
                 }
             }
