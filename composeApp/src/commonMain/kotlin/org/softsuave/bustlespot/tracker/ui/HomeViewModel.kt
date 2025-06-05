@@ -168,6 +168,7 @@ class HomeViewModel(
     val locationViewModel = LocationViewModel()
 
     val locationInfo = locationViewModel.locationInfo
+    val geoFenceInfo = locationViewModel.geoFenceInfo
 
 
     //    private val _taskList =MutableStateFlow<List<TaskData>>(emptyList())
