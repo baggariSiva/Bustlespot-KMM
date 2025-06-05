@@ -207,8 +207,8 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         ByteArrayOutputStream().use { byteArrayOutputStream ->
             ImageIO.write(bufferedImage, "png", file)
             ImageIO.write(bufferedImage, "png", byteArrayOutputStream)
-            currentImageUri.value =
-                Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
+//            currentImageUri.value =
+//                Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
         }
         sendLocalNotification(
             "Bustle-spot Reminder",
@@ -300,15 +300,39 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             endTime = endTime.toString(),
             mouseActivity = mouseKeyEvents.value,
             keyboardActivity = keyboradKeyEvents.value,
-            totalActivity = (((mouseKeyEvents.value + keyboradKeyEvents.value) / intervalInSeconds.toFloat()) * 100).toInt(),
+            totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri = currentImageUri.value
+            uri =base64Converter()
         )
         startTime = endTime
         globalEventListener.resetClickCount()
         canCallApi.value = false
         return activity
+    }
+
+    fun getActivityPercentage(): Int {
+        val endTime = getEndTime()
+        val intervalInSeconds =
+            endTime.epochSeconds.seconds.inWholeSeconds - startTime.epochSeconds.seconds.inWholeSeconds
+        if (intervalInSeconds.toInt() == 0) return 0
+        val activityPercentage =
+            (((mouseKeyEvents.value + keyboradKeyEvents.value) / intervalInSeconds.toFloat()) * 100).toInt()
+
+        val dragEvents: Int = when (activityPercentage) {
+            in 0..10 -> (mouseMotionCount.value * 0.08f).toInt()
+            in 10..20 -> (mouseMotionCount.value * 0.07f).toInt()
+            in 20..30 -> (mouseMotionCount.value * 0.06f).toInt()
+            in 30..40 -> (mouseMotionCount.value * 0.05f).toInt()
+            in 40..50 -> (mouseMotionCount.value * 0.04f).toInt()
+            else -> 0
+        }
+
+        val percentage =
+            (((mouseKeyEvents.value + keyboradKeyEvents.value + dragEvents) / intervalInSeconds.toFloat()) * 100).toInt()
+
+
+        return if (percentage > 100) 100 else percentage
     }
 
     actual fun getStoreActivityData(): ActivityData {
@@ -323,10 +347,10 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             endTime = endTime.toString(),
             mouseActivity = mouseKeyEvents.value,
             keyboardActivity = keyboradKeyEvents.value,
-            totalActivity = (((mouseKeyEvents.value + keyboradKeyEvents.value) / intervalInSeconds.toFloat()) * 100).toInt(),
+            totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri = currentImageUri.value
+            uri = base64Converter()
         )
         storeStartTime = endTime
         return activity
@@ -358,18 +382,15 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         return activity
     }
 
-    private fun base64Converter() {
-
+    private fun base64Converter():String {
 //        screenShot.value?.toString()?.let { Log.d("this is great $it") }
-        viewModelScope.launch {
-            currentImageUri.value = screenShot.value?.let {
+        return screenShot.value?.let {
                 val byteArrayOutputStream = ByteArrayOutputStream()
                 ImageIO.write(it.toAwtImage(), "png", byteArrayOutputStream)
                 val bytes = byteArrayOutputStream.toByteArray()
                 Log.d("$bytes y")
                 Base64.getEncoder().encodeToString(bytes)
             }.toString()
-        }
     }
 
 

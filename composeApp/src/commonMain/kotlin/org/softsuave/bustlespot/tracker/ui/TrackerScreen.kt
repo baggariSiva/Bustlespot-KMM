@@ -165,6 +165,7 @@ fun TrackerScreen(
 
 //            showIdleDialog = true
             homeViewModel.stopTrackerTimer()
+            homeViewModel.updateSelectedTaskTime(trackerTimer, idleTime)
             homeViewModel.updateTrackerTimer()
             homeViewModel.postUpdateActivity(
                 organisationId = organisationId.toInt()
@@ -330,7 +331,13 @@ fun TrackerScreen(
                                         homeViewModel.handleTrackerDialogEvents(
                                             TrackerDialogEvents.ShowProjectChangeDialog(
                                                 selectedItem as Project
-                                            )
+                                            ), handleNavAction = {
+                                                if (isTrackerRunning) {
+                                                    homeViewModel.startPostingActivity(
+                                                        organisationId.toInt()
+                                                    )
+                                                }
+                                            }
                                         )
                                     } else if (selectedItem != selectedProject) {
                                         homeViewModel.handleDropDownEvents(
@@ -383,7 +390,13 @@ fun TrackerScreen(
                                         homeViewModel.handleTrackerDialogEvents(
                                             TrackerDialogEvents.ShowTaskChangeDialog(
                                                 selectedItem as TaskData
-                                            )
+                                            ), handleNavAction = {
+                                                if (isTrackerRunning) {
+                                                    homeViewModel.startPostingActivity(
+                                                        organisationId.toInt()
+                                                    )
+                                                }
+                                            }
                                         )
                                     } else if (selectedItem != selectedTask) {
                                         homeViewModel.handleDropDownEvents(
