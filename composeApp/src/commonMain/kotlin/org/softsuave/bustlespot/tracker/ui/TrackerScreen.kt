@@ -144,10 +144,11 @@ fun TrackerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val locationInfo by homeViewModel.locationInfo.collectAsState()
+    val geoFenceInfo by homeViewModel.geoFenceInfo.collectAsState()
 
 
-    LaunchedEffect(locationInfo) {
-        sendLocalNotification(10, locationInfo)
+    LaunchedEffect(geoFenceInfo) {
+        sendLocalNotification(10, geoFenceInfo)
     }
 
 
