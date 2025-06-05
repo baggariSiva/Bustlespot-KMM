@@ -163,32 +163,32 @@ class HomeViewModel(
     fun stopIdleTimer() = trackerModule.stopIdleTimer()
 
 
-    //    private val _taskList = kotlinx.coroutines.flow.MutableStateFlow<List<TaskData>>(emptyList())
+    //    private val _taskList =MutableStateFlow<List<TaskData>>(emptyList())
     private val _mainTaskList =
-        kotlinx.coroutines.flow.MutableStateFlow<List<TaskData>>(emptyList())
+        MutableStateFlow<List<TaskData>>(emptyList())
     private val _mainProjectList =
-        kotlinx.coroutines.flow.MutableStateFlow<List<Project>>(emptyList())
+        MutableStateFlow<List<Project>>(emptyList())
 
     private val _uiEvent =
-        kotlinx.coroutines.flow.MutableStateFlow<UiEvent<TrackerScreenData>>(UiEvent.Loading)
+        MutableStateFlow<UiEvent<TrackerScreenData>>(UiEvent.Loading)
     val uiEvent: StateFlow<UiEvent<TrackerScreenData>> get() = _uiEvent
 
     private val _dialogEvent =
-        kotlinx.coroutines.flow.MutableStateFlow<Boolean>(false)
+        MutableStateFlow(false)
     val dialogEvent: StateFlow<Boolean> get() = _dialogEvent
 
-    private val trackerScreenData = TrackerScreenData(mutableListOf(), mutableListOf())
+    private val trackerScreenData = TrackerScreenData(true)
 
-    private val _selectedProject = kotlinx.coroutines.flow.MutableStateFlow<Project?>(null)
+    private val _selectedProject = MutableStateFlow<Project?>(null)
     val selectedProject: StateFlow<Project?> = _selectedProject.asStateFlow()
 
-    private val _selectedTask = kotlinx.coroutines.flow.MutableStateFlow<TaskData?>(null)
+    private val _selectedTask = MutableStateFlow<TaskData?>(null)
     val selectedTask: StateFlow<TaskData?> = _selectedTask.asStateFlow()
 
-    private val _projectDropDownState = kotlinx.coroutines.flow.MutableStateFlow(DropDownState())
+    private val _projectDropDownState = MutableStateFlow(DropDownState())
     val projectDropDownState: StateFlow<DropDownState> = _projectDropDownState.asStateFlow()
 
-    private val _taskDropDownState = kotlinx.coroutines.flow.MutableStateFlow(DropDownState())
+    private val _taskDropDownState = MutableStateFlow(DropDownState())
     val taskDropDownState: StateFlow<DropDownState> = _taskDropDownState.asStateFlow()
 
     private val _trackerDialogState: MutableStateFlow<TrackerDialogState> =
@@ -226,9 +226,7 @@ class HomeViewModel(
                             dropDownList = filteredList,
                             errorMessage = if (result.data.projectLists.isNullOrEmpty()) "No projects to select" else ""
                         )
-                        trackerScreenData.listOfProject?.addAll(
-                            filteredList
-                        )
+                        trackerScreenData.is_success
                         _uiEvent.update { UiEvent.Success(trackerScreenData) }
                         fetchAllTasksForProjects(
                             projects = filteredList,
@@ -241,32 +239,32 @@ class HomeViewModel(
     }
 
 
-    fun fetchTasksForProject(projectId: Int, organisationId: String) {
-        viewModelScope.launch {
-            trackerRepository.getAllTask(
-                GetTasksRequest(projectId = projectId.toString(), organisationId)
-            ).collect { result ->
-                when (result) {
-                    is Result.Error -> {
-                        _taskDropDownState.value = _taskDropDownState.value.copy(
-                            errorMessage = result.message ?: "Failed to fetch tasks"
-                        )
-                    }
-
-                    is Result.Loading -> {
-                        Log.d("Loading at projects")
-                    }
-
-                    is Result.Success -> {
-                        val taskList = result.data.taskDetails ?: emptyList()
-                        _mainTaskList.value = _mainTaskList.value.plus(taskList)
-                        trackerScreenData.listOfTask?.addAll(taskList)
-                    }
-                }
-            }
-        }
-    }
-
+//    fun fetchTasksForProject(projectId: Int, organisationId: String) {
+//        viewModelScope.launch {
+//            trackerRepository.getAllTask(
+//                GetTasksRequest(projectId = projectId.toString(), organisationId)
+//            ).collect { result ->
+//                when (result) {
+//                    is Result.Error -> {
+//                        _taskDropDownState.value = _taskDropDownState.value.copy(
+//                            errorMessage = result.message ?: "Failed to fetch tasks"
+//                        )
+//                    }
+//
+//                    is Result.Loading -> {
+//                        Log.d("Loading at projects")
+//                    }
+//
+//                    is Result.Success -> {
+//                        val taskList = result.data.taskDetails ?: emptyList()
+//                        _mainTaskList.value = _mainTaskList.value.plus(taskList)
+//                        trackerScreenData.boolen
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
 
     private fun fetchAllTasksForProjects(projects: List<Project>, organisationId: String) {
         viewModelScope.launch {
@@ -287,9 +285,9 @@ class HomeViewModel(
                         }
 
                         is Result.Success -> {
-                            val taskList = result.data.taskDetails ?: emptyList()
+                            val taskList = result.data.taskDetails
                             _mainTaskList.value = _mainTaskList.value.plus(taskList)
-                            trackerScreenData.listOfTask?.addAll(taskList)
+                            trackerScreenData.is_success
                         }
                     }
                 }
@@ -648,8 +646,9 @@ class HomeViewModel(
 
 
 data class TrackerScreenData(
-    val listOfProject: MutableList<Project>?,
-    val listOfTask: MutableList<TaskData>?
+    val is_success: Boolean
+//    val listOfProject: MutableList<Project>?,
+//    val listOfTask: MutableList<TaskData>?
 )
 
 sealed class DropDownEvents {
