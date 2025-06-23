@@ -217,14 +217,14 @@ class HomeViewModel(
                     }
 
                     is Result.Success -> {
-                        val filteredList = result.data.projectLists?.filter { project ->
+                        val filteredList = result.data.filter { project ->
                             project.users?.any { it.userId == sessionManager.userId } == true
-                        } ?: emptyList()
+                        }
 
                         _mainProjectList.value = filteredList
                         _projectDropDownState.value = _projectDropDownState.value.copy(
                             dropDownList = filteredList,
-                            errorMessage = if (result.data.projectLists.isNullOrEmpty()) "No projects to select" else ""
+                            errorMessage = if (result.data.isNullOrEmpty()) "No projects to select" else ""
                         )
                         trackerScreenData.is_success
                         _uiEvent.update { UiEvent.Success(trackerScreenData) }
