@@ -18,10 +18,6 @@ expect val platformModule: Module
 
 
 val sharedModules = module {
-//    viewModelFactory {  }
-//    viewModel { LoginViewModel(get(),get()) } // If dependencies are needed, use get()
-//    viewModel { HomeViewModelForTimer(get()) }
-//    viewModel { TrackerViewModel(get()) }
     viewModelOf(::LoginViewModel)
     viewModelOf(::HomeViewModelForTimer)
 
@@ -36,7 +32,7 @@ val sharedModules = module {
     single<SignUpRepository> { SignUpRepositoryImpl(get()) }
 
     single<SignOutUseCase> {
-        SignOutUseCase(get(), get(), get())
+        SignOutUseCase(get(), get())
     }
 }
 
