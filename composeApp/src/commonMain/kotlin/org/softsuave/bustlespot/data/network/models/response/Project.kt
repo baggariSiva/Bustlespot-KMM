@@ -33,7 +33,7 @@ open class DisplayItem {
 @Serializable
 data class ProjectUser(
     val roleId: Int? = null,
-    val userId: Int? = null,
+    val userId: String? = null,
     val fullName: String? = null,
     val profileImage: String? = null// Can be null
 )

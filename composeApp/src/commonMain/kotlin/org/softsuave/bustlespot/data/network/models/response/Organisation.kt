@@ -6,13 +6,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Organisation(
+    @SerialName("organisation_name")
     val name: String,
-    val organisationId: Int,
-    @SerialName("image")
-    val imageUrl: String,
-    val roleId: Int,
-    val enableScreenshot: Int,
+    @SerialName("organisation_id")
+    val organisationId: String,
+    @SerialName("organisation_description")
     val description: String,
-    val role: String,
-    val otherRoleIds: List<Int>
+    @SerialName("organisation_image_url")
+    val imageUrl: String,
+    @SerialName("role")
+    val roleId: Int,
 )
