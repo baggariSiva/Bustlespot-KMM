@@ -23,6 +23,6 @@ object APIEndpoints {
     const val SIGNIN = "/auth/signin"
     const val GETALLORGANISATIONS ="/organisation/get_all_organisation"
     const val SIGNOUT = "/auth/signout"
+    const val GETORGANISATIONMODULES = "/module/get_all_modules"
     const val GETALLPROJECTS = "/project/getProjectList"
-
 }
