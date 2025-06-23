@@ -43,10 +43,10 @@ class SessionManager(
             settings.putString("access_token", value)
         }
 
-    var userId: Int
-        get() = settings.getInt("user_id", 0)
+    var userId: String
+        get() = settings.getString("user_id", "")
         set(value) {
-            settings.putInt("user_id", value)
+            settings.putString("user_id", value)
         }
     var userFirstName: String
         get() = settings.getString("first_name", "")

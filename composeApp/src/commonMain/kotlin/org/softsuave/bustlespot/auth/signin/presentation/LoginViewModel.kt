@@ -3,13 +3,11 @@ package org.softsuave.bustlespot.auth.signin.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.russhwolf.settings.ObservableSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.softsuave.bustlespot.SessionManager
-import org.softsuave.bustlespot.auth.signin.data.BaseResponse
 import org.softsuave.bustlespot.auth.signin.data.SignInRepository
 import org.softsuave.bustlespot.auth.signin.data.User
 import org.softsuave.bustlespot.auth.utils.CustomTextFieldState
@@ -20,8 +18,7 @@ import org.softsuave.bustlespot.auth.utils.validatePassword
 
 class LoginViewModel(
     private val repository: SignInRepository,
-    private val sessionManager: SessionManager,
-    private val settings: ObservableSettings
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _email: MutableStateFlow<CustomTextFieldState> =
@@ -62,12 +59,12 @@ class LoginViewModel(
                         when (result) {
                             is Result.Success -> {
                                 launch {
-                                    result.data.token?.let { newToken ->
+                                    result.data.token.let { newToken ->
                                         sessionManager.accessToken = newToken
                                         sessionManager.updateAccessToken(
                                             newToken
                                         )
-                                    } ?: println("Token not found")
+                                    }
                                     result.data.apply {
                                         sessionManager.userId = userId
                                         sessionManager.userFirstName = firstName
