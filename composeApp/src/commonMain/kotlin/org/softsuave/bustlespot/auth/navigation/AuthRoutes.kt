@@ -11,6 +11,7 @@ sealed class AuthScreen(val route: String) {
 
 sealed class Home(val route: String) {
     data object Organisation : Home("organisation")
+    data object OrganisationModule : Home("organisation_module")
     data object Tracker : Home("tracker")
 }
 
