@@ -346,24 +346,6 @@ fun OrganizationItem(
     }
 }
 
-@Composable
-fun OrganisationCardIteam(modifier: Modifier = Modifier, organisationModel: Organisation) {
-    ElevatedCard(
-        modifier = modifier.fillMaxWidth().height(50.dp),
-        colors = CardColors(
-            containerColor = Color.White,
-            contentColor = Color.Black,
-            disabledContentColor = Color.Unspecified,
-            disabledContainerColor = Color.Unspecified
-        ),
-    ) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            RoundedImageView(imageUrl = "organisationModel.organisationImageURL")
-            Text(text = organisationModel.name, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
 
 @Composable
 fun RoundedImageView(modifier: Modifier = Modifier, imageUrl: String = "URL") {

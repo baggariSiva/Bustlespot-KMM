@@ -11,9 +11,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.util.reflect.TypeInfo
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.update
 import org.softsuave.bustlespot.Log
 import org.softsuave.bustlespot.SessionManager
 import org.softsuave.bustlespot.auth.signin.data.BaseResponse
@@ -23,14 +23,13 @@ import org.softsuave.bustlespot.data.network.APIEndpoints.GETALLACTIVITIES
 import org.softsuave.bustlespot.data.network.APIEndpoints.GETALLPROJECTS
 import org.softsuave.bustlespot.data.network.APIEndpoints.GETALLTASKS
 import org.softsuave.bustlespot.data.network.APIEndpoints.POSTACTIVITY
-import org.softsuave.bustlespot.data.network.BASEURL
-import kotlinx.coroutines.flow.update
 import org.softsuave.bustlespot.data.network.APIEndpoints.UPDATEACTIVITY
+import org.softsuave.bustlespot.data.network.BASEURL
 import org.softsuave.bustlespot.data.network.models.request.UpdateActivityRequest
 import org.softsuave.bustlespot.data.network.models.response.ErrorResponse
 import org.softsuave.bustlespot.data.network.models.response.GetAllActivities
-import org.softsuave.bustlespot.data.network.models.response.GetAllProjects
 import org.softsuave.bustlespot.data.network.models.response.GetAllTasks
+import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.tracker.data.model.ActivityDataResponse
 import org.softsuave.bustlespot.tracker.data.model.GetProjectRequest
 import org.softsuave.bustlespot.tracker.data.model.PostActivityRequest
@@ -42,7 +41,7 @@ class TrackerRepositoryImpl(
     private val db: Database,
 ) : TrackerRepository {
 
-    override fun getAllProjects(organisationId: String): Flow<Result<GetAllProjects>> {
+    override fun getAllProjects(organisationId: String): Flow<Result<List<Project>>> {
         return flow {
             try {
                 emit(Result.Loading)
@@ -54,9 +53,9 @@ class TrackerRepositoryImpl(
                     bearerAuth(sessionManager.accessToken)
                 }
                 if (response.status == HttpStatusCode.OK) {
-                    val data: BaseResponse<GetAllProjects> = response.body()
+                    val data: BaseResponse<List<Project>> = response.body()
                     println(data)
-                    emit(Result.Success(data.data ?: GetAllProjects(emptyList())))
+                    emit(Result.Success(data.data ?: listOf<Project>()))
                 } else {
                     val responseBody: BaseResponse<ErrorResponse> = response.body()
                     println(responseBody)
@@ -93,7 +92,7 @@ class TrackerRepositoryImpl(
         }
     }
 
-    override fun updateActivity(updateActivityRequest: UpdateActivityRequest): Flow<Result<GetAllTasks>>{
+    override fun updateActivity(updateActivityRequest: UpdateActivityRequest): Flow<Result<GetAllTasks>> {
         return flow {
             try {
                 emit(Result.Loading)
