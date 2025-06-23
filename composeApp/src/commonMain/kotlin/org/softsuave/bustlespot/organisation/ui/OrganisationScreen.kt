@@ -193,7 +193,7 @@ fun OrganisationScreen(
                 ) {
 
                     OrganizationList(
-                        organizations = organisationList?.listOfOrganisations,
+                        organizations = (uiEvent as UiEvent.Success<List<Organisation>>).data,
                         navController = navController
                     )
                 }
@@ -229,7 +229,7 @@ fun OrganisationScreen(
             is UiEvent.Success -> {
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        (logOutEvent as UiEvent.Success).data.message,
+                        "Logged out successfully",
                         actionLabel = "Retry"
                     )
                 }
@@ -270,7 +270,7 @@ fun OrganizationList(organizations: List<Organisation>?, navController: NavContr
                         navController.navigate(
                             route = "${Home.Tracker.route}/{orgId}/{orgName}".replace(
                                 oldValue = "{orgId}",
-                                newValue = organization.organisationId.toString()
+                                newValue = organization.organisationId
                             ).replace(
                                 oldValue = "{orgName}",
                                 newValue = organization.name
@@ -432,13 +432,13 @@ fun BustleSpotAppBar(
             }
         },
         colors =
-        TopAppBarColors(
-            containerColor = Color.White,
-            navigationIconContentColor = BustleSpotRed,
-            titleContentColor = BustleSpotRed,
-            scrolledContainerColor = Color.Unspecified,
-            actionIconContentColor = Color.Unspecified
-        )
+            TopAppBarColors(
+                containerColor = Color.White,
+                navigationIconContentColor = BustleSpotRed,
+                titleContentColor = BustleSpotRed,
+                scrolledContainerColor = Color.Unspecified,
+                actionIconContentColor = Color.Unspecified
+            )
     )
 }
 
