@@ -11,9 +11,9 @@ data class Organisation(
     @SerialName("organisation_id")
     val organisationId: String,
     @SerialName("organisation_description")
-    val description: String,
+    val description: String?,
     @SerialName("organisation_image_url")
-    val imageUrl: String,
+    val imageUrl: String?,
     @SerialName("role")
     val roleId: Int,
 )
