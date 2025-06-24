@@ -65,6 +65,10 @@ class LoginViewModel(
                                             newToken
                                         )
                                     }
+                                    result.data.refreshToken.let { refreshToken ->
+                                        sessionManager.refreshToken = refreshToken
+                                        sessionManager.updateRefreshToken(refreshToken)
+                                    }
                                     result.data.apply {
                                         sessionManager.userId = userId
                                         sessionManager.userFirstName = firstName
