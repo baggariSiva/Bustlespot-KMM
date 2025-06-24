@@ -42,6 +42,11 @@ class SessionManager(
         set(value) {
             settings.putString("access_token", value)
         }
+    var refreshToken: String
+        get() = settings.getString("refresh_token", "")
+        set(value) {
+            settings.putString("refresh_token", value)
+        }
 
     var userId: String
         get() = settings.getString("user_id", "")
@@ -64,6 +69,13 @@ class SessionManager(
     fun updateAccessToken(token: String): Boolean {
         isLoggedIn.value = true
         accessToken = token
+        println("Updated access token. isLoggedIn = ${isLoggedIn.value}")
+        return true
+    }
+
+    fun updateRefreshToken(token: String): Boolean {
+        isLoggedIn.value = true
+        refreshToken = token
         println("Updated access token. isLoggedIn = ${isLoggedIn.value}")
         return true
     }

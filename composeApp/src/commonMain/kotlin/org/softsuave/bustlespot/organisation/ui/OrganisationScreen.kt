@@ -264,7 +264,7 @@ fun OrganizationList(organizations: List<Organisation>?, navController: NavContr
         organizations?.let {
             items(organizations) { organization ->
                 OrganizationItem(
-                    imageUrl = organization.imageUrl,
+                    imageUrl = organization.imageUrl ?: "",
                     organizationName = organization.name,
                     onClick = {
                         navController.navigate(
