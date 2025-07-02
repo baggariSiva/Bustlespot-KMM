@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,10 +24,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,10 +58,14 @@ import bustlespot.composeapp.generated.resources.Res
 import bustlespot.composeapp.generated.resources.compose_multiplatform
 import bustlespot.composeapp.generated.resources.ic_logout
 import coil3.ImageLoader
+import coil3.PlatformContext
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
+import coil3.disk.DiskCache
+import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import io.ktor.http.ContentDisposition.Companion.File
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -121,7 +122,6 @@ fun OrganisationScreen(
                 isNavigationEnabled = false,
                 isAppBarIconEnabled = true,
                 iconUserName = sessionManager.userFirstName.trim() + " " + sessionManager.userLastName.trim(),
-//                iconUserName =  "",
                 isLogOutEnabled = true,
                 onLogOutClick = {
                     organisationViewModel.showLogOutDialog()
@@ -182,7 +182,7 @@ fun OrganisationScreen(
                 delay(800)
                 dialogTextState = "Syncing working/idle time"
             }
-            LoadingDialog(dialogLoadingText = dialogTextState)
+            LoadingDialog(loadingTitleText = dialogTextState)
         }
         when (uiEvent) {
             is UiEvent.Success -> {
@@ -191,7 +191,6 @@ fun OrganisationScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
-
                     OrganizationList(
                         organizations = (uiEvent as UiEvent.Success<List<Organisation>>).data,
                         navController = navController
@@ -262,7 +261,9 @@ fun OrganizationList(organizations: List<Organisation>?, navController: NavContr
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         organizations?.let {
-            items(organizations) { organization ->
+            items(
+                organizations,
+                key = { organization -> organization.organisationId }) { organization ->
                 OrganizationItem(
                     imageUrl = organization.imageUrl ?: "",
                     organizationName = organization.name,
@@ -317,10 +318,9 @@ fun OrganizationItem(
                 AsyncImage(
                     model = ImageRequest.Builder(platformContext)
                         .data(imageUrl)
-                        .crossfade(true)
                         .build(),
                     contentDescription = "",
-                    imageLoader = ImageLoader(context = platformContext),
+                    imageLoader = rememberImageLoader(context = platformContext),
                     modifier = Modifier,
                     placeholder = painterResource(resource = Res.drawable.compose_multiplatform),
                     error = painterResource(resource = Res.drawable.compose_multiplatform)
@@ -356,6 +356,18 @@ fun RoundedImageView(modifier: Modifier = Modifier, imageUrl: String = "URL") {
         )
     }
 }
+
+@Composable
+fun rememberImageLoader(context: PlatformContext): ImageLoader {
+    return remember {
+        ImageLoader.Builder(context)
+            .crossfade(true)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .build()
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class, KoinExperimentalAPI::class)
 @Composable

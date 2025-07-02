@@ -11,16 +11,19 @@ data class PostActivityRequest(
 
 @Serializable
 data class ActivityData(
-    @SerialName("taskId") var taskId: Int? = 0,
-    @SerialName("projectId") var projectId: Int? = 0,
-    @SerialName("startTime") var startTime: String? = null,
-    @SerialName("endTime") var endTime: String? = null,
-    @SerialName("mouseActivity") var mouseActivity: Int? = 0,
-    @SerialName("keyboardActivity") var keyboardActivity: Int? = 0,
-    @SerialName("totalActivity") var totalActivity: Int? = 0,
-    @SerialName("billable") var billable: String? = "",
+    @SerialName("task_id") var taskId: String? = "",
+    @SerialName("project_id") var projectId: String? = "",
+    @SerialName("start_time") var startTime: String? = null,
+    @SerialName("end_time") var endTime: String? = null,
+    @SerialName("last_screenshot_time") var lastScreenShotTime: String? = null,
+    @SerialName("mouse_activity") var mouseActivity: Int? = 0,
+    @SerialName("keyboard_activity") var keyboardActivity: Int? = 0,
+    @SerialName("total_activity_percentage") var totalActivity: Int? = 0,
+    @SerialName("is_billable") var billable: String? = "",
     @SerialName("notes") var notes: String? = null,
     @SerialName("organisationId") var orgId: Int? = 0,
     @SerialName("uri") var uri: String? = null,
-    @SerialName("unTrackedTime") var unTrackedTime: Long? = null
+    @SerialName("idle_time") var unTrackedTime: Long? = null,
+    var longitude: Double?= null,
+    var latitude: Double?= null
 )

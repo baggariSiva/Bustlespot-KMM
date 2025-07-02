@@ -32,7 +32,7 @@ class OrganisationModuleRepositoryImpl(
             val response: HttpResponse = httpClient.get("$BASEURL$GETORGANISATIONMODULES") {
                 contentType(ContentType.Application.Json)
                 bearerAuth(sessionManager.accessToken)
-                parameter("organisationId", organisationId)
+                parameter("organisation_id", organisationId)
             }
             if (response.status == HttpStatusCode.OK) {
                 val result: BaseResponse<List<OrganisationModule>> = response.body()
