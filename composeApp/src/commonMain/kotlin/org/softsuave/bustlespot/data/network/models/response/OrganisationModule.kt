@@ -21,3 +21,10 @@ data class OrganisationModule(
     @SerialName("is_deleted")
     val isDeleted: Boolean,
 )
+
+
+@Serializable
+data class ModuleResponse(
+    @SerialName("modules")
+    val modules: List<OrganisationModule>,
+)
