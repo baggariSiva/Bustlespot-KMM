@@ -91,11 +91,11 @@ kotlin {
 
             // Geocoding
             implementation(libs.compass.geocoder)
-            implementation(libs.compass.geocoder.mobile)
-
-            // Geolocation
+//            implementation(libs.compass.geocoder.mobile)
+//
+//            // Geolocation
             implementation(libs.compass.geolocation)
-            implementation(libs.compass.geolocation.mobile)
+//            implementation(libs.compass.geolocation.mobile)
             api("io.github.mirzemehdi:kmpnotifier:1.5.1")
         }
 
@@ -119,6 +119,11 @@ kotlin {
             implementation(libs.koin.androidx.compose)
             implementation(libs.android.driver)
 
+            implementation("com.tomtom.sdk.maps:map-display:1.25.3")
+            implementation(libs.compass.geocoder.mobile)
+
+            implementation(libs.compass.geolocation.mobile)
+
             // AndroidX
             implementation(libs.androidx.startup.runtime)
             api(libs.kmpnotifier)
@@ -135,6 +140,8 @@ kotlin {
         }
 
         nativeMain.dependencies {
+            implementation(libs.compass.geocoder.mobile)
+            implementation(libs.compass.geolocation.mobile)
             implementation(libs.ktor.client.darwin)
             implementation(libs.native.driver)
         }
