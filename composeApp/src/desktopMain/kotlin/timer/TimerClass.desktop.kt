@@ -56,7 +56,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     private var trackerTimerTask: TimerTask? = null
     private var idleTimerTask: TimerTask? = null
     private var trackerIndex = 0
-    private val screenShotFrequency = 1 // n of screenshot in a slot
+    private val screenShotFrequency = 10 // n of screenshot in a slot
     private val screenshotLimit = 10 //in mints
     private var idealStartTime: Instant = Instant.DISTANT_PAST
     private val postActivityInterval: Int = 600 //in second

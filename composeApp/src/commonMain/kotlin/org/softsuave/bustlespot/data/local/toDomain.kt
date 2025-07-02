@@ -6,8 +6,8 @@ import org.softsuave.bustlespot.tracker.data.model.ActivityData
 
 fun com.example.ActivityData.toDomain(): ActivityData {
     return ActivityData(
-        taskId = this.taskId?.toInt(),
-        projectId = this.projectId?.toInt(),
+        taskId = this.taskId?.toString(),
+        projectId = this.projectId?.toString(),
         startTime = this.startTime,
         endTime = this.endTime,
         mouseActivity = this.mouseActivity?.toInt(),
