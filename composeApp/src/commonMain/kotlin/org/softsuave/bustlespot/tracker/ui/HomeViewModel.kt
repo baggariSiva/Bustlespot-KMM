@@ -55,6 +55,7 @@ class HomeViewModel(
             this.taskId = _selectedTask.value?.taskId
             this.projectId = _selectedProject.value?.projectId
             if (_isOnSiteSelected.value) {
+                this.uri = null
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
             }
