@@ -5,16 +5,45 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TaskData(
-    @SerialName("taskId") val taskId: Int? = 0,
-    @SerialName("name") val name: String,
-    @SerialName("projectId") val projectId: Int = 0,
-    @SerialName("projectName") val projectName: String? = null,
-    @SerialName("organisationId") val organisationId: Int? = 0,
-    @SerialName("time") var time: Int? = 0,
-    @SerialName("startTime") val startTime: String? = null,
-    @SerialName("endTime") val endTime: String? = null,
-    @SerialName("notes") var notes: String? = null,
-    @SerialName("lastScreenShotTime") val lastScreenShotTime: String? = null,
-    @SerialName("screenshots") val screenshots: String? = null,
-    @SerialName("unTrackedTime") var unTrackedTime: Int? = null
-) : DisplayItem()
+    @SerialName("task_id")
+    val taskId: String,
+
+    @SerialName("task_name")
+    val name: String,
+
+    @SerialName("status_id")
+    val statusId: String? = null,
+
+    @SerialName("schedule_time")
+    val scheduleTime: String? = null,
+
+    @SerialName("updated_date")
+    val updatedDate: String? = null,
+
+    @SerialName("task_description")
+    val taskDescription: String? = null,
+
+    @SerialName("priority")
+    val priority: String,
+
+    @SerialName("due_date")
+    val dueDate: String,
+
+    @SerialName("created_date")
+    val createdDate: String,
+
+    @SerialName("project_id")
+    val projectId: String,
+
+    @SerialName("working_time")
+    var time : Float,
+
+    @SerialName("idle_time")
+    var unTrackedTime : Float,
+
+    @SerialName("last_screenshot_time")
+    val lastScreenShotTime : String? = null,
+
+    @SerialName("last_screenshot")
+    val lastScreenshot : String? = null,
+)

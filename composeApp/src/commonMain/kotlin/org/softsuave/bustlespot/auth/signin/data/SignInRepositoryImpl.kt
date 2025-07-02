@@ -4,6 +4,7 @@ package org.softsuave.bustlespot.auth.signin.data
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -46,6 +47,7 @@ class SignInRepositoryImpl(
             emit(Result.Loading)
             val response: HttpResponse = httpClient.post("$BASEURL${APIEndpoints.SIGNIN}") {
                 contentType(ContentType.Application.Json)
+                header("isTracker", "true")
                 setBody(
                     SignInRequest(
                         email = email,
