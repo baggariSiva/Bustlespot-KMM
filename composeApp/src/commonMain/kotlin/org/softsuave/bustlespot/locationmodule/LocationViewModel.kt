@@ -7,21 +7,26 @@ import dev.jordond.compass.geolocation.Geolocator
 import dev.jordond.compass.geolocation.GeolocatorResult
 import dev.jordond.compass.geolocation.LocationRequest
 import dev.jordond.compass.geolocation.TrackingStatus
-import dev.jordond.compass.geolocation.mobile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.softsuave.bustlespot.tracker.ui.Coordinate
 
 class LocationViewModel() : ViewModel() {
-    private val geolocator: Geolocator = Geolocator.mobile()
+    val locator = MGeoLocator().getLocator()
+    private val geolocator: Geolocator = Geolocator(locator)
     private val initalGeocode: Geocode = Geocode(0.0, 0.0, "")
     private var geoFenceThreshold: Double = 0.0
     private var geoFenceManager: GeoFenceManager =
         GeoFenceManager(GeoFenceShape.Circle(initalGeocode, geoFenceThreshold))
     private val _locationInfo = MutableStateFlow("Press the button to get location")
     val locationInfo: StateFlow<String> = _locationInfo
+
+    private val _coordinateInfo = MutableStateFlow(Coordinate(0.0,0.0))
+    val coordinateInfo: StateFlow<Coordinate> = _coordinateInfo
+
 
     private val _distanceInfo = MutableStateFlow("Press the button to get location")
     val distanceInfo: StateFlow<String> = _distanceInfo
@@ -51,6 +56,7 @@ class LocationViewModel() : ViewModel() {
                         if (geoFenceRunning.value) {
                             checkGeoFence(Geocode(location.latitude, location.longitude, ""))
                         }
+                        _coordinateInfo.value = Coordinate(location.latitude, location.longitude)
                         _locationInfo.value =
                             "Latitude: ${location.latitude} \nLongitude: ${location.longitude}"
                     }
@@ -65,6 +71,7 @@ class LocationViewModel() : ViewModel() {
                 is GeolocatorResult.Success -> {
                     val location = result.data.coordinates
 //                    setInitialGeocodeAndUpdateDistance(location.latitude, location.longitude)
+                    _coordinateInfo.value = Coordinate(location.latitude, location.longitude)
                     _locationInfo.value =
                         "Latitude: ${location.latitude}, Longitude: ${location.longitude}"
                 }
