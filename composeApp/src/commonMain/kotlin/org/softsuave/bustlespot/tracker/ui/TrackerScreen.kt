@@ -115,26 +115,18 @@ fun TrackerScreen(
     onFocusReceived: () -> Unit = {}
 ) {
     val homeViewModel = koinViewModel<HomeViewModel>()
-
-    // Tracker timer and other states from homeViewModel remain unchanged.
     val trackerTimer by homeViewModel.trackerTime.collectAsState()
     val isTrackerRunning by homeViewModel.isTrackerRunning.collectAsState()
     val idleTime by homeViewModel.idealTime.collectAsState()
-    val screenShotState by homeViewModel.screenShotState.collectAsState()
-    val screenShotTakenTime by homeViewModel.screenShotTakenTime.collectAsState()
     val customeTimeForIdleTime by homeViewModel.customeTimeForIdleTime.collectAsState()
-//    val isNetworkAvailable by homeViewModel.isNetworkAvailable.collectAsState(false)
-    // Collect the consolidated drop-down states from HomeViewModel.
     val projectDropDownState by homeViewModel.projectDropDownState.collectAsState()
     val taskDropDownState by homeViewModel.taskDropDownState.collectAsState()
 
     val trackerDialogState by homeViewModel.trackerDialogState.collectAsState()
 
-    // Still track the selected project and task if needed.
     val selectedProject by homeViewModel.selectedProject.collectAsState()
     val selectedTask by homeViewModel.selectedTask.collectAsState()
 
-    // UI event (loading, failure, etc.) from the view model.
     val uiEvent by homeViewModel.uiEvent.collectAsState()
     val dialogEvent by homeViewModel.dialogEvent.collectAsState()
     val lastSyncTime by homeViewModel.lastSyncTime.collectAsState()
@@ -152,7 +144,6 @@ fun TrackerScreen(
     }
 
 
-    // Launch idle dialog effect.
     LaunchedEffect(idleTime) {
         if (idleTime > customeTimeForIdleTime && !homeViewModel.trackerDialogState.value.isDialogShown) {
             onFocusReceived.invoke()
@@ -163,8 +154,6 @@ fun TrackerScreen(
                     )
                 }
             }
-
-//            showIdleDialog = true
             homeViewModel.stopTrackerTimer()
             homeViewModel.updateSelectedTaskTime(trackerTimer, idleTime)
             homeViewModel.updateTrackerTimer()
@@ -172,10 +161,6 @@ fun TrackerScreen(
                 organisationId = organisationId.toInt()
             )
         }
-//        val now = Clock.System.now().toLocalDateTime(TimeZone.of("Asia/Kolkata"))
-//        if (now.hour in 19 until 20 && now.minute in 0 until 1) {
-//            navController.navigateUp()
-//        }
     }
 
     DisposableEffect(Unit) {
@@ -185,7 +170,6 @@ fun TrackerScreen(
 
         }
     }
-// for mobile devices
     handleBackPress(
         onBack = {
             if (isTrackerRunning) {
@@ -238,21 +222,6 @@ fun TrackerScreen(
             Log.d("call restored canStoreApiCall ${homeViewModel.canStoreApiCall.value}")
         }
     }
-    // code for lunching the tracker not started dialog
-    /*LaunchedEffect(Unit) {
-        var dialogShown = false
-        while (true) {
-            delay(6000)
-            if (!isTrackerRunning && !dialogShown) {
-                homeViewModel.handleTrackerDialogEvents(
-                    TrackerDialogEvents.ShowTrackerNotStartedDialog
-                )
-                dialogShown = true
-            } else if (isTrackerRunning) {
-                dialogShown = false
-            }
-        }
-    }*/
 
 
 
@@ -284,7 +253,7 @@ fun TrackerScreen(
                     }
                 },
                 isNavigationEnabled = true,
-                isAppBarIconEnabled = false, // to remove the user icon in tracker screen
+                isAppBarIconEnabled = false,
                 iconUserName = "Test 1",
             )
         },
@@ -360,19 +329,11 @@ fun TrackerScreen(
                                     )
                                 },
                                 onNoOptionClick = {
-//                            if (selectedProject == null) {
                                     homeViewModel.handleDropDownEvents(
                                         DropDownEvents.OnProjectSearch(
                                             ""
                                         )
                                     )
-//                            } else {
-//                                homeViewModel.handleDropDownEvents(
-//                                    DropDownEvents.OnProjectSelection(
-//                                        selectedProject = selectedProject!!
-//                                    )
-//                                )
-//                            }
                                 },
                                 selectedProject = selectedProject,
                                 isSelected = selectedProject != null,
@@ -412,15 +373,7 @@ fun TrackerScreen(
                                     homeViewModel.handleDropDownEvents(DropDownEvents.OnTaskDropDownClick)
                                 },
                                 onNoOptionClick = {
-//                            if (selectedTask == null) {
                                     homeViewModel.handleDropDownEvents(DropDownEvents.OnTaskSearch(""))
-//                            } else {
-//                                homeViewModel.handleDropDownEvents(
-//                                    DropDownEvents.OnTaskSelection(
-//                                        selectedTask = selectedTask!!
-//                                    )
-//                                )
-//                            }
                                 },
                                 inputText = taskDropDownState.inputText,
                                 onSearchText = { searchText ->
@@ -448,10 +401,9 @@ fun TrackerScreen(
                             )
                         }
                         item {
-                            ScreenShotSection(
-                                lastImageTakenTime = secondsToTimeForScreenshot(screenShotTakenTime),
-                                imageBitmap = screenShotState,
-                                lastTakenImage = selectedTask?.screenshots
+                            LocationSection(
+                                locationInfo = locationInfo,
+                                modifier = Modifier.fillMaxWidth(0.85f).padding(vertical = 8.dp)
                             )
                         }
                         item {
@@ -467,12 +419,6 @@ fun TrackerScreen(
                                 lastSyncTime = formatEpochToTime(lastSyncTime)
                             )
                         }
-                        item {
-                            Text(
-                                "Current Location:\n $locationInfo",
-                                modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
-                            )
-                        }
                     }
                 }
             }
@@ -484,24 +430,6 @@ fun TrackerScreen(
                 textAlign = TextAlign.End,
                 modifier = Modifier.align(Alignment.End).padding(end = 5.dp, bottom = 5.dp)
             )
-
-
-            /*
-                        Box {
-                            Row {
-                                TextField(
-                                    value = customeTimeForIdleTime.toString(),
-                                    onValueChange = {
-                                        if (it.isNotEmpty()) {
-                                            homeViewModel.addCustomTimeForIdleTime(it.toInt())
-                                        } else {
-                                            homeViewModel.addCustomTimeForIdleTime(10)
-                                        }
-                                    },
-                                    label = { Text("Custom Time") },
-                                )
-                            }
-                        }*/
 
             if (trackerDialogState.isDialogShown) {
                 CustomAlertDialog(
@@ -795,16 +723,14 @@ fun TimerSessionSection(
             ) {
                 if (isTrackerRunning) {
                     StopButton(onClick = {
-                        requestPermission {
-                            if (isTrackerRunning) {
-                                homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
-                                homeViewModel.startPostingActivity(
-                                    organisationId.toInt(),
-                                    showLoading = true
-                                )
-                            } else {
-                                homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
-                            }
+                        if (isTrackerRunning) {
+                            homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
+                            homeViewModel.startPostingActivity(
+                                organisationId.toInt(),
+                                showLoading = true
+                            )
+                        } else {
+                            homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
                         }
                     })
                 } else {
@@ -922,46 +848,26 @@ private fun StopButton(onClick: () -> Unit) {
 }
 
 @Composable
-fun ScreenShotSection(
+fun LocationSection(
     modifier: Modifier = Modifier,
-    lastImageTakenTime: String = "10min ago",
-    imageBitmap: ImageBitmap? = imageResource(Res.drawable.screen),
-    lastTakenImage: String? = ""
+    locationInfo: String
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
+        modifier = modifier.fillMaxWidth(0.85f).height(200.dp).padding(top = 16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Latest Screen Capture",
-                color = Color.Black,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = lastImageTakenTime,
-                color = BustleSpotRed,
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-        imageBitmap?.let { bitmap ->
-            Image(
-                modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)
-                    .aspectRatio(1.8f),
-                bitmap = bitmap,
-                contentDescription = "Screenshot"
-            )
-        } ?: AsyncImage(
-            model = lastTakenImage,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            imageLoader = ImageLoader(LocalPlatformContext.current),
-            modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)
-                .aspectRatio(1.8f)
+        Text(
+            text = "Latest Captured Location",
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            text = locationInfo,
+            color = Color.Black,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
@@ -1024,7 +930,7 @@ fun SyncNowSection(
 
 fun <T> List<T>.moveToFirst(item: T): List<T> {
     val mutableList = this.toMutableList()
-    if (mutableList.remove(item)) { // Only move if the item exists
+    if (mutableList.remove(item)) {
         mutableList.add(0, item)
     }
     return mutableList

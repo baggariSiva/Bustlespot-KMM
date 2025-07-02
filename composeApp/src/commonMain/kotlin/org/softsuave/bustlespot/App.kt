@@ -24,28 +24,8 @@ internal fun App(onFocusReceived: () -> Unit = {},
                  onMinimizeClick:() -> Unit ={},
                  onCloseClick : () -> Unit ={},) {
     val navController = rememberNavController()
-    val currentPlatform = getPlatform()
     MaterialTheme {
-//        Column(modifier = Modifier.fillMaxSize()
-//            .pointerInput(Unit) {
-//                detectDragGestures(
-//                    onDragStart = { offset ->
-////                        onDragStart(offset)
-//                    },
-//                    onDrag = { change, dragAmount ->
-////                        onDrag(change,dragAmount)
-//                    },
-//                )
-//            }
-//        ) {
-//            if(currentPlatform.name == "Desktop"){
-//                CustomTitleBar(
-//                    onMinimizeClick = {onMinimizeClick()},
-//                    onCloseClick = {onCloseClick()}
-//                )
-//            }
          RootNavigationGraph(navController, onFocusReceived)
-//        }
     }
 }
 

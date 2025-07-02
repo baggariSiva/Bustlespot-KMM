@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
