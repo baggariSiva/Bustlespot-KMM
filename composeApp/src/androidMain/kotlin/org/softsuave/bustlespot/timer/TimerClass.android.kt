@@ -117,23 +117,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         isTrackerRunning.value = true
         isIdealTimerRunning.value = true
         GlobalAccessibilityEvents.isListening.value = true
-        //    globalEventListener.registerListeners()
-
-        val serviceIntent = Intent(
-            ComponentActivityReference.getActivity(),
-            MediaProjectionService::class.java
-        ).apply {
-            putExtra("resultCode", MainActivity.ProjectionData.resultCode) // Pass resultCode
-            putExtra("data", MainActivity.ProjectionData.data) // Pass data
-
-        }
-        ComponentActivityReference.getActivity()?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                it.startForegroundService(serviceIntent) // Use startForegroundService for Android O+
-            } else {
-                it.startService(serviceIntent) // Use startService for older versions
-            }
-        }
+        //    globalEventListener.registerListeners(
         setRandomTimes(
             randomTime,
             overallStart = 0,
