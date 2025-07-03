@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -73,7 +74,6 @@ import org.softsuave.bustlespot.auth.utils.secondsToTimeFormat
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
 import org.softsuave.bustlespot.utils.BustleSpotRed
 import org.softsuave.bustlespot.utils.moveToFirst
-import org.softsuave.bustlespot.utils.requestPermission
 
 @Composable
 fun <T> DropDownSelectionList(
@@ -259,16 +259,16 @@ fun TimerSessionSection(
             ) {
                 if (isTrackerRunning) {
                     StopButton(onClick = {
-                        requestPermission {
-                            if (isTrackerRunning) {
-                                homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
-                                homeViewModel.startPostingActivity(
-                                    showLoading = true
-                                )
-                            } else {
-                                homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
-                            }
+//                        requestPermission {
+                        if (isTrackerRunning) {
+                            homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
+                            homeViewModel.startPostingActivity(
+                                showLoading = true
+                            )
+                        } else {
+                            homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
                         }
+//                        }
                     })
                 } else {
                     Icon(
@@ -282,14 +282,14 @@ fun TimerSessionSection(
                                 interactionSource = interactionSource,
                                 indication = null
                             ) {
-                                requestPermission {
-                                    if (isTrackerRunning) {
-                                        homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
-                                        homeViewModel.startPostingActivity()
-                                    } else {
-                                        homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
-                                    }
+//                                requestPermission {
+                                if (isTrackerRunning) {
+                                    homeViewModel.handleTrackerTimerEvents(TimerEvents.StopTimer)
+                                    homeViewModel.startPostingActivity()
+                                } else {
+                                    homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
                                 }
+//                                }
                             }
                     )
                 }
@@ -482,6 +482,40 @@ fun SyncNowSection(
             }.pointerHoverIcon(PointerIcon.Hand),
             color = if (isHoveredOne) BustleSpotRed else Color.Black,
         )
+    }
+}
+
+@Composable
+fun UploadImageSection(
+    modifier: Modifier = Modifier,
+    onClickUploadImage: () -> Unit = {},
+    imageBitmap: ImageBitmap? = null,
+    imageLoader: ImageLoader? = null
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row {
+            Icon(
+                Icons.Rounded.Place,
+                contentDescription = "Upload Image",
+                modifier = Modifier.size(24.dp).padding(end = 8.dp)
+            )
+            Text(
+                text = "Upload Image",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable(
+                    onClickLabel = "clicked",
+                    role = Role.Button
+                ) {
+                    onClickUploadImage()
+                }.pointerHoverIcon(PointerIcon.Hand),
+                color = BustleSpotRed
+            )
+        }
     }
 }
 

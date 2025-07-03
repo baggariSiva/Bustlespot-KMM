@@ -20,6 +20,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -187,48 +188,48 @@ fun TrackerScreen(
 
     val moduleDropDownSelectionData =
         DropDownSelectionData<OrganisationModule>(
-        title = "Module",
-        onSearchText = { searchText ->
-            homeViewModel.handleDropDownEvents(
-                DropDownEvents.OnModuleSearch(searchText)
-            )
-        },
-        inputText = moduleDropDownState.inputText,
-        dropDownList = moduleDropDownState.dropDownList,
-        onItemClick = { selectedItem ->
-            if (isTrackerRunning && selectedItem.moduleId != selectedModule?.moduleId) {
-                homeViewModel.handleTrackerDialogEvents(
-                    TrackerDialogEvents.ShowModuleChangeDialog(selectedItem),
-                    handleNavAction = {
-                        if (isTrackerRunning) {
-                            homeViewModel.startPostingActivity()
-                        }
-                    }
-                )
-            } else if (selectedItem != selectedModule) {
+            title = "Module",
+            onSearchText = { searchText ->
                 homeViewModel.handleDropDownEvents(
-                    DropDownEvents.OnModuleSelection(selectedItem)
+                    DropDownEvents.OnModuleSearch(searchText)
                 )
+            },
+            inputText = moduleDropDownState.inputText,
+            dropDownList = moduleDropDownState.dropDownList,
+            onItemClick = { selectedItem ->
+                if (isTrackerRunning && selectedItem.moduleId != selectedModule?.moduleId) {
+                    homeViewModel.handleTrackerDialogEvents(
+                        TrackerDialogEvents.ShowModuleChangeDialog(selectedItem),
+                        handleNavAction = {
+                            if (isTrackerRunning) {
+                                homeViewModel.startPostingActivity()
+                            }
+                        }
+                    )
+                } else if (selectedItem != selectedModule) {
+                    homeViewModel.handleDropDownEvents(
+                        DropDownEvents.OnModuleSelection(selectedItem)
+                    )
+                }
+            },
+            displayText = { module -> module.moduleName },
+            isSelectedItem = { item, selected -> item == selected },
+            isEnabled = moduleDropDownState.dropDownList.isNotEmpty(),
+            onDropDownClick = {
+                homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDropDownClick)
+            },
+            onNoOptionClick = {
+                homeViewModel.handleDropDownEvents(
+                    DropDownEvents.OnModuleSearch("")
+                )
+            },
+            error = moduleDropDownState.errorMessage,
+            selectedItem = selectedModule,
+            isSelected = selectedModule != null,
+            onDismissClick = {
+                homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDismiss)
             }
-        },
-        displayText = { module -> module.moduleName },
-        isSelectedItem = { item, selected -> item == selected },
-        isEnabled = moduleDropDownState.dropDownList.isNotEmpty(),
-        onDropDownClick = {
-            homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDropDownClick)
-        },
-        onNoOptionClick = {
-            homeViewModel.handleDropDownEvents(
-                DropDownEvents.OnModuleSearch("")
-            )
-        },
-        error = moduleDropDownState.errorMessage,
-        selectedItem = selectedModule,
-        isSelected = selectedModule != null,
-        onDismissClick = {
-            homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDismiss)
-        }
-    )
+        )
 
     val projectDropDownSelectionData = DropDownSelectionData<Project>(
         title = "Project",
@@ -381,7 +382,7 @@ fun TrackerScreen(
                     }
                     LazyColumn {
                         item {
-                            for (dropDownData in getDropDownSelectionData()){
+                            for (dropDownData in getDropDownSelectionData()) {
                                 DropDownSelectionList(
                                     modifier = Modifier,
                                     dropDownData
@@ -399,12 +400,12 @@ fun TrackerScreen(
                             )
                         }
                         item {
-                            if(isOnSiteSelected){
+                            if (isOnSiteSelected) {
                                 Text(
                                     "Current Location:\n $locationInfo",
                                     modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
                                 )
-                            }else {
+                            } else {
                                 ScreenShotSection(
                                     lastImageTakenTime = secondsToTimeForScreenshot(
                                         screenShotTakenTime
@@ -413,6 +414,9 @@ fun TrackerScreen(
                                     lastTakenImage = selectedTask?.lastScreenshot
                                 )
                             }
+                        }
+                        item {
+                            UploadImageSection()
                         }
                         item {
                             SyncNowSection(
@@ -494,7 +498,6 @@ fun TrackerScreen(
     }
 
 }
-
 
 
 @Composable
