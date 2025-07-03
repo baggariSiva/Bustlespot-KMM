@@ -29,7 +29,6 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            //   export("io.github.mirzemehdi:kmpnotifier:1.4.0")
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts("-lsqlite3", "_sqlite3")
@@ -126,7 +125,6 @@ kotlin {
 
             // AndroidX
             implementation(libs.androidx.startup.runtime)
-            api(libs.kmpnotifier)
         }
 
         desktopMain.dependencies {
@@ -135,8 +133,6 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.jnativehook)
             implementation(libs.sqlite.driver)
-
-            api(libs.kmpnotifier)
         }
 
         nativeMain.dependencies {

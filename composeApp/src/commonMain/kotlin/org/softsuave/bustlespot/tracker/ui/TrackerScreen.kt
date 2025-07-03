@@ -49,8 +49,6 @@ import org.softsuave.bustlespot.browser.openWebLink
 import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.data.network.models.response.TaskData
-import org.softsuave.bustlespot.locationmodule.LocationViewModel
-import org.softsuave.bustlespot.locationmodule.sendLocalNotification
 import org.softsuave.bustlespot.organisation.ui.BustleSpotAppBar
 import org.softsuave.bustlespot.tracker.scheduleWork
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
@@ -103,10 +101,6 @@ fun TrackerScreen(
     val geoFenceInfo by homeViewModel.geoFenceInfo.collectAsState()
     val coordinateInfo by homeViewModel.coordinateInfo.collectAsState()
     val isOnSiteSelected by homeViewModel.isOnSiteSelected.collectAsState()
-
-    LaunchedEffect(geoFenceInfo) {
-        sendLocalNotification(10, geoFenceInfo)
-    }
 
     LaunchedEffect(idleTime) {
         if (idleTime > customeTimeForIdleTime && !homeViewModel.trackerDialogState.value.isDialogShown) {

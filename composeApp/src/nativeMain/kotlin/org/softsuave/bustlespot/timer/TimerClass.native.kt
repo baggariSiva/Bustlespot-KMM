@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
-import org.softsuave.bustlespot.notifications.sendLocalNotification
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
@@ -197,10 +196,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 //        val bufferedImage: ImageBitmap? = screenShot.value
 //        val file = File(System.getProperty("java.io.tmpdir"), "sampleFile")
 //        ImageIO.write(bufferedImage, "png", file)
-        sendLocalNotification(
-            "Bustle-spot Remainder",
-            "Captured screen-shot", null
-        )
     }
 
     actual fun startScreenshotTask() {

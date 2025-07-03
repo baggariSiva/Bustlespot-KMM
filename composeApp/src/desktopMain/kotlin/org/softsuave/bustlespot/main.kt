@@ -72,12 +72,6 @@ fun main() {
             }
         })
 
-        NotifierManager.initialize(
-            NotificationPlatformConfiguration.Desktop(
-                showPushNotification = true
-            )
-        )
-
         initKoin()
 
         Window(
