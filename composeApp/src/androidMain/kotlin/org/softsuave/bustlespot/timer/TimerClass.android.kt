@@ -1,25 +1,17 @@
 package org.softsuave.bustlespot.timer
 
-import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
-import org.softsuave.bustlespot.MainActivity
-import org.softsuave.bustlespot.accessability.GlobalAccessibilityEvents
-import org.softsuave.bustlespot.screenshot.ComponentActivityReference
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
-import org.softsuave.bustlespot.ui.MediaProjectionService
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -30,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-@RequiresApi(Build.VERSION_CODES.O)
 actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -79,10 +70,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         Log.d("stopTimer")
         isTrackerRunning.value = false
         idealStartTime = Clock.System.now()
-        ComponentActivityReference.getActivity()?.apply {
-            val serviceIntent = Intent(this, MediaProjectionService::class.java)
-            stopService(serviceIntent)
-        }
+
 
         //   globalEventListener.unregisterListeners()
     }
@@ -115,22 +103,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         isTrackerRunning.value = true
         isIdealTimerRunning.value = true
         //    globalEventListener.registerListeners()
-
-        val serviceIntent = Intent(
-            ComponentActivityReference.getActivity(),
-            MediaProjectionService::class.java
-        ).apply {
-            putExtra("resultCode", MainActivity.ProjectionData.resultCode) // Pass resultCode
-            putExtra("data", MainActivity.ProjectionData.data) // Pass data
-
-        }
-        ComponentActivityReference.getActivity()?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                it.startForegroundService(serviceIntent) // Use startForegroundService for Android O+
-            } else {
-                it.startService(serviceIntent) // Use startService for older versions
-            }
-        }
         setRandomTimes(
             randomTime,
             overallStart = 0,
@@ -138,33 +110,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             numberOfIntervals = screenShotFrequency
         )
         trackerIndex = 0
-        CoroutineScope(Dispatchers.IO).launch {
-            GlobalAccessibilityEvents.keyCountFlow.collectLatest { count ->
-                if (isTrackerRunning.value) {
-                    keyboradKeyEvents.emit(count)
-                    idealTime.value = 0
-                    Log.d("idle time rested1")
-                }
-            }
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            GlobalAccessibilityEvents.mouseCountFlow.collectLatest { count ->
-                if (isTrackerRunning.value) {
-                    mouseKeyEvents.emit(count)
-                    idealTime.value = 0
-                    Log.d("idle time rested2")
-                }
-            }
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            GlobalAccessibilityEvents.mouseMotionCountFlow.collectLatest { count ->
-                if (isTrackerRunning.value) {
-                    mouseMotionCount.emit(count)
-                    idealTime.value = 0
-                    Log.d("idle time rested3")
-                }
-            }
-        }
+
         startTime = Clock.System.now()
         storeStartTime = Clock.System.now()
         if (!isIdleTaskScheduled.getAndSet(true)) {
@@ -238,7 +184,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         return (startTime.epochSeconds.seconds.inWholeSeconds - idealStartTime.epochSeconds.seconds.inWholeSeconds).toInt()
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun takeScreenShot() {
         screenShot.value = org.softsuave.bustlespot.screenshot.takeScreenShot()
         screenShot.value?.let { saveImageAndConvertToBase64(it) }?.let {

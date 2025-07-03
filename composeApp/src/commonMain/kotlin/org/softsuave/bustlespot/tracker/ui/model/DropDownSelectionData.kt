@@ -14,5 +14,6 @@ data class DropDownSelectionData<T>(
     val error: String? = null,
     val selectedItem: T? = null,
     val isSelected: Boolean = false,
-    val onDismissClick: () -> Unit = {}
+    val onDismissClick: () -> Unit = {},
+    val readOnly: Boolean = false
 )

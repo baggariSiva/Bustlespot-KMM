@@ -1,7 +1,5 @@
 package org.softsuave.bustlespot.tracker.ui
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.PlatFormType
 import org.softsuave.bustlespot.SessionManager
 import org.softsuave.bustlespot.auth.utils.Result
 import org.softsuave.bustlespot.auth.utils.UiEvent
@@ -21,6 +20,7 @@ import org.softsuave.bustlespot.data.network.models.request.UpdateActivityReques
 import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.data.network.models.response.TaskData
+import org.softsuave.bustlespot.getPlatform
 import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.network.NetworkMonitor
 import org.softsuave.bustlespot.timer.TrackerModule
@@ -33,6 +33,9 @@ class HomeViewModel(
     private val trackerRepository: TrackerRepository,
     private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
+
+    private var _platFormType: MutableStateFlow<PlatFormType> = MutableStateFlow(getPlatform().platformType)
+    val platFormType = _platFormType.asStateFlow()
 
     private val trackerModule = TrackerModule(viewModelScope)
     val trackerTime: StateFlow<Int> = trackerModule.trackerTime
@@ -47,6 +50,8 @@ class HomeViewModel(
 
 
     fun startTrackerTimer() = trackerModule.startTimer()
+
+
 
     private fun constructPostActivityRequest(
         activityDataOfModule: ActivityData
@@ -185,6 +190,55 @@ class HomeViewModel(
     // actual is 7200ms -- 120 mins
     private val idealTimeThreshold: Int = 7200
 
+    private fun selectModuleAsPerPlatform(
+        platformType: PlatFormType
+    ) {
+        when (platformType) {
+            PlatFormType.IOS, PlatFormType.ANDROID -> {
+                val selected = _moduleDropDownState.value.dropDownList.firstOrNull {
+                    it.moduleName.contains("onsite", ignoreCase = true)
+                }
+                _selectedModule.value = selected
+                setModuleAndGetProTas(
+                    selected ?: _moduleDropDownState.value.dropDownList.firstOrNull() ?: return
+                )
+            }
+
+            PlatFormType.DESKTOP -> {
+                val selected = _moduleDropDownState.value.dropDownList.firstOrNull {
+                    it.moduleName.contains("it", ignoreCase = true)
+                }
+                _selectedModule.value = selected
+                setModuleAndGetProTas(
+                    selected ?: _moduleDropDownState.value.dropDownList.firstOrNull() ?: return
+                )
+            }
+
+            PlatFormType.UNKNOWN -> {
+                // TODO: handle unknown
+            }
+        }
+
+    }
+
+    private fun setModuleAndGetProTas(selectedModule: OrganisationModule) {
+        _moduleDropDownState.value = _moduleDropDownState.value.copy(
+            inputText = selectedModule.moduleName.toString(),
+            errorMessage = ""
+        )
+        _projectDropDownState.value = _projectDropDownState.value.copy(
+            inputText = ""
+
+        )
+        _taskDropDownState.value = _taskDropDownState.value.copy(
+            inputText = ""
+        )
+        _selectedProject.value = null
+        _selectedTask.value = null
+        resetTrackerTimer()
+        getAllProjects(selectedModule.moduleId.toString())
+    }
+
     fun getAllModules(organisationId: String) {
         viewModelScope.launch {
             trackerRepository.getAllModules(organisationId).collect { result ->
@@ -207,10 +261,12 @@ class HomeViewModel(
                                 errorMessage = if (result.data.isEmpty()) "No modules to select" else ""
                             )
                         }
+                        selectModuleAsPerPlatform(_platFormType.value)
                         _uiEvent.update { UiEvent.Success(trackerScreenData) }
                     }
                 }
             }
+
         }
     }
 
@@ -235,7 +291,7 @@ class HomeViewModel(
                             dropDownList = result.data,
                             errorMessage = if (result.data.isEmpty()) "No projects to select" else ""
                         )
-                        trackerScreenData.is_success
+                        trackerScreenData.isSuccess
                         _uiEvent.update { UiEvent.Success(trackerScreenData) }
                         fetchAllTasksForProjects(
                             projects = result.data
@@ -465,24 +521,41 @@ class HomeViewModel(
             }
 
             is DropDownEvents.OnModuleSelection -> {
-                _selectedModule.value = dropDownEvents.selectedModule
-                _moduleDropDownState.value = _moduleDropDownState.value.copy(
-                    inputText = dropDownEvents.selectedModule.moduleName,
-                    errorMessage = ""
-                )
-                _projectDropDownState.value = _projectDropDownState.value.copy(
-                    inputText = ""
-
-                )
-                _taskDropDownState.value = _taskDropDownState.value.copy(
-                    inputText = ""
-                )
-                _isOnSiteSelected.value =
-                    dropDownEvents.selectedModule.moduleName.contains("Onsite")
-                _selectedProject.value = null
-                _selectedTask.value = null
-                resetTrackerTimer()
-                getAllProjects(_selectedModule.value?.moduleId.toString())
+                if (_selectedModule.value == dropDownEvents.selectedModule) {
+                    _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                        inputText = dropDownEvents.selectedModule.moduleName,
+                        errorMessage = ""
+                    )
+                } else {
+                    if (_platFormType.value == PlatFormType.DESKTOP) {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = true,
+                            title = "Alert",
+                            text = "Oops! '${dropDownEvents.selectedModule.moduleName}' isn’t available on desktop. Please try it on the mobile version.",
+                            confirmButtonText = "Ok",
+                            showDismissButton = false,
+                            onConfirm = {
+                                _trackerDialogState.value = _trackerDialogState.value.copy(
+                                    isDialogShown = false,
+                                )
+                            }
+                        )
+                    }
+                    if (_platFormType.value == PlatFormType.ANDROID || _platFormType.value == PlatFormType.IOS) {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = true,
+                            title = "Alert",
+                            text = "Oops! '${dropDownEvents.selectedModule.moduleName}' isn’t available on ${_platFormType.value.name.lowercase()} devices. Please try it on the desktop version.",
+                            confirmButtonText = "Ok",
+                            showDismissButton = false,
+                            onConfirm = {
+                                _trackerDialogState.value = _trackerDialogState.value.copy(
+                                    isDialogShown = false,
+                                )
+                            }
+                        )
+                    }
+                }
             }
 
             is DropDownEvents.OnModuleDropDownClick -> {
@@ -645,8 +718,6 @@ class HomeViewModel(
                     }
                 )
             }
-
-            else -> {}
         }
     }
 
@@ -715,7 +786,7 @@ class HomeViewModel(
 
 
 data class TrackerScreenData(
-    val is_success: Boolean
+    val isSuccess: Boolean
 )
 
 sealed class DropDownEvents {
@@ -745,9 +816,10 @@ data class TrackerDialogState(
     val title: String = "",
     val text: String = "",
     val confirmButtonText: String = "",
-    val dismissButtonText: String = "",
+    val dismissButtonText: String? = "",
+    var showDismissButton: Boolean = true,
     val onConfirm: () -> Unit = {},
-    val onDismiss: () -> Unit = {}
+    val onDismiss: () -> Unit? = {}
 )
 
 sealed class TrackerDialogEvents {

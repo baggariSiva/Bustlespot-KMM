@@ -71,7 +71,7 @@ fun NavGraphBuilder.homeNavGraph(
                     navController,
                     organisationName = orgName ?: "",
                     organisationId = orgId,
-                    onFocusReceived = onFocusReceived
+                    onFocusReceived = onFocusReceived,
                 )
             }
 

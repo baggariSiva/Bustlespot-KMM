@@ -2,7 +2,6 @@ package org.softsuave.bustlespot.tracker
 
 import android.content.Context
 import androidx.work.*
-import org.softsuave.bustlespot.screenshot.ComponentActivityReference
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
@@ -14,15 +13,15 @@ actual fun scheduleWork(performTask: () -> Unit) {
         .setInitialDelay(getMillisUntilNextRun(), TimeUnit.MILLISECONDS)
         .build()
 
-    ComponentActivityReference.getActivity()?.baseContext?.applicationContext?.let { context ->
-        WorkManager.getInstance(
-            context = context
-        )
-    }?.enqueueUniqueWork(
-        "DailyTask",
-        ExistingWorkPolicy.REPLACE,
-        request
-    )
+//    ComponentActivityReference.getActivity()?.baseContext?.applicationContext?.let { context ->
+//        WorkManager.getInstance(
+//            context = context
+//        )
+//    }?.enqueueUniqueWork(
+//        "DailyTask",
+//        ExistingWorkPolicy.REPLACE,
+//        request
+//    )
 }
 
 class DailyWorker(appContext: Context, workerParams: WorkerParameters) :

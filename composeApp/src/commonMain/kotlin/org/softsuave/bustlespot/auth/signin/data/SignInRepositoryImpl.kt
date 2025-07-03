@@ -47,7 +47,7 @@ class SignInRepositoryImpl(
             emit(Result.Loading)
             val response: HttpResponse = httpClient.post("$BASEURL${APIEndpoints.SIGNIN}") {
                 contentType(ContentType.Application.Json)
-                header("isTracker", "true")
+                header("is_tracker", "true")
                 setBody(
                     SignInRequest(
                         email = email,

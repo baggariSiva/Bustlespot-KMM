@@ -5,7 +5,6 @@ import androidx.annotation.Keep
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.example.Database
-import org.softsuave.bustlespot.screenshot.ComponentActivityReference
 
 @Keep
 actual fun createDriver(): SqlDriver {

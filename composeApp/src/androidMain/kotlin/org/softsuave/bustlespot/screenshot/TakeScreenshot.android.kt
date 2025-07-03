@@ -3,7 +3,7 @@ package org.softsuave.bustlespot.screenshot
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import org.softsuave.bustlespot.MediaProjectionHelper.ScreenShot
+import org.softsuave.bustlespot.createSettings
 
 actual fun takeScreenShot(): ImageBitmap? {
     // Retrieve MediaProjection and Context via Koin.
@@ -16,6 +16,5 @@ actual fun takeScreenShot(): ImageBitmap? {
 //
 //    val screenshotProvider = ScreenshotProvider(context, mediaProjection)
     // takeSystemScreenshot() will stop the projection at the end
-    println("Taking screenshot")
-    return ScreenShot.screenShot.value?.asImageBitmap()
+    return null
 }

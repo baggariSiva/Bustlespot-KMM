@@ -157,7 +157,8 @@ fun <T> DropDownSelectionList(
                 unfocusedContainerColor = Color.White,
                 focusedIndicatorColor = BustleSpotRed
             ),
-            isError = !data.error.isNullOrEmpty()
+            isError = !data.error.isNullOrEmpty(),
+            readOnly = data.readOnly
         )
         DropdownMenu(
             expanded = isMenuExpanded && data.isEnabled,
@@ -429,6 +430,35 @@ fun ScreenShotSection(
     }
 }
 
+@Composable
+fun MapSection(
+    modifier: Modifier = Modifier,
+    centerCoordinate: Coordinate,
+    onMarkerClick: (Coordinate) -> Unit = {}
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Latest Location Capture",
+                color = Color.Black,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        MapViewMobile(
+            centerCoordinate = centerCoordinate,
+            onMarkerClick = onMarkerClick
+        )
+        UploadImageSection()
+    }
+}
+
 
 @Composable
 fun SyncNowSection(
@@ -524,7 +554,7 @@ fun UploadImageSection(
 data class Coordinate(val latitude: Double, val longitude: Double)
 
 @Composable
-expect fun TomTomMap(
+expect fun MapViewMobile(
     centerCoordinate: Coordinate,
     modifier: Modifier = Modifier,
     onMarkerClick: (Coordinate) -> Unit = {}

@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-actual fun TomTomMap(
+actual fun MapViewMobile(
     centerCoordinate: Coordinate,
     modifier: Modifier,
     onMarkerClick: (Coordinate) -> Unit

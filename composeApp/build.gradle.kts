@@ -12,7 +12,6 @@ plugins {
     alias(libs.plugins.buildConfig)
     id("com.google.gms.google-services") version "4.4.0" apply false
     id("app.cash.sqldelight") version "2.0.2"
-
 }
 
 kotlin {
@@ -41,6 +40,7 @@ kotlin {
                             "-lsqlite3",
                             "_sqlite3"
                         )
+                        linkerOpts += "-framework MapKit"
                     }
             }
         }
@@ -136,6 +136,7 @@ kotlin {
         }
 
         nativeMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
             implementation(libs.compass.geocoder.mobile)
             implementation(libs.compass.geolocation.mobile)
             implementation(libs.ktor.client.darwin)
@@ -162,6 +163,7 @@ buildConfig{
     forClass("BuildConfigKt"){
         buildConfigField("String", "APP_NAME", "\"${project.name}\"")
         buildConfigField("String", "APP_VERSION", "\"${project.version}\"")
+        buildConfigField("String", "TOM_TOM_MAP_KEY", "\"8KZB8zTu2dRMVPN08mwXYNo7JztLRa6N\"")
     }
 }
 android {

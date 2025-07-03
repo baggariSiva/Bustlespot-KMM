@@ -2,8 +2,10 @@ package org.softsuave.bustlespot.tracker.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +39,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.softsuave.bustlespot.APP_VERSION
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.PlatFormType
+import org.softsuave.bustlespot.Platform
 import org.softsuave.bustlespot.auth.utils.CustomAlertDialog
 import org.softsuave.bustlespot.auth.utils.LoadingDialog
 import org.softsuave.bustlespot.auth.utils.LoadingScreen
@@ -66,15 +70,14 @@ fun TrackerScreen(
     onFocusReceived: () -> Unit = {},
     homeViewModel: HomeViewModel = koinViewModel()
 ) {
-//    val homeViewModel = koinViewModel<HomeViewModel>()
-
-    // Tracker timer and other states from homeViewModel remain unchanged.
     val trackerTimer by homeViewModel.trackerTime.collectAsState()
     val isTrackerRunning by homeViewModel.isTrackerRunning.collectAsState()
     val idleTime by homeViewModel.idealTime.collectAsState()
+    val platformType by homeViewModel.platFormType.collectAsState()
     val screenShotState by homeViewModel.screenShotState.collectAsState()
     val screenShotTakenTime by homeViewModel.screenShotTakenTime.collectAsState()
     val customeTimeForIdleTime by homeViewModel.customeTimeForIdleTime.collectAsState()
+//        homeViewModel.setPlatFormType(platform.platformType)
 //    val isNetworkAvailable by homeViewModel.isNetworkAvailable.collectAsState(false)
     // Collect the consolidated drop-down states from HomeViewModel.
     val moduleDropDownState by homeViewModel.moduleDropDownState.collectAsState()
@@ -101,6 +104,15 @@ fun TrackerScreen(
     val geoFenceInfo by homeViewModel.geoFenceInfo.collectAsState()
     val coordinateInfo by homeViewModel.coordinateInfo.collectAsState()
     val isOnSiteSelected by homeViewModel.isOnSiteSelected.collectAsState()
+
+
+    LaunchedEffect(key1 = Unit) {
+        homeViewModel.getAllModules(
+            organisationId = organisationId
+        )
+    }
+
+
 
     LaunchedEffect(idleTime) {
         if (idleTime > customeTimeForIdleTime && !homeViewModel.trackerDialogState.value.isDialogShown) {
@@ -174,11 +186,6 @@ fun TrackerScreen(
         }
     }
 
-    LaunchedEffect(key1 = Unit) {
-        homeViewModel.getAllModules(
-            organisationId = organisationId
-        )
-    }
 
     val moduleDropDownSelectionData =
         DropDownSelectionData<OrganisationModule>(
@@ -222,7 +229,8 @@ fun TrackerScreen(
             isSelected = selectedModule != null,
             onDismissClick = {
                 homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDismiss)
-            }
+            },
+            readOnly = true
         )
 
     val projectDropDownSelectionData = DropDownSelectionData<Project>(
@@ -394,24 +402,28 @@ fun TrackerScreen(
                             )
                         }
                         item {
-                            if (isOnSiteSelected) {
-                                Text(
-                                    "Current Location:\n $locationInfo",
-                                    modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
-                                )
-                            } else {
-                                ScreenShotSection(
-                                    lastImageTakenTime = secondsToTimeForScreenshot(
-                                        screenShotTakenTime
-                                    ),
-                                    imageBitmap = screenShotState,
-                                    lastTakenImage = selectedTask?.lastScreenshot
-                                )
+                            when (platformType) {
+                                PlatFormType.IOS, PlatFormType.ANDROID -> {
+                                    MapSection(
+                                        modifier = Modifier.height(350.dp),
+                                        centerCoordinate = coordinateInfo
+                                    )
+                                }
+
+                                PlatFormType.DESKTOP -> {
+                                    ScreenShotSection(
+                                        lastImageTakenTime = secondsToTimeForScreenshot(
+                                            screenShotTakenTime
+                                        ),
+                                        imageBitmap = screenShotState,
+                                        lastTakenImage = selectedTask?.lastScreenshot
+                                    )
+                                }
+
+                                PlatFormType.UNKNOWN -> {}
                             }
                         }
-                        item {
-                            UploadImageSection()
-                        }
+
                         item {
                             SyncNowSection(
                                 onClickUserActivity = {
@@ -467,26 +479,31 @@ fun TrackerScreen(
                         }
                     },
                     dismissButton = {
-                        TextButton(
-                            onClick = {
-                                trackerDialogState.onDismiss()
-                            },
-                            colors = ButtonColors(
-                                containerColor = Color.White,
-                                contentColor = BustleSpotRed,
-                                disabledContainerColor = Color.Gray,
-                                disabledContentColor = Color.Black
-                            ),
-                            shape = RoundedCornerShape(5.dp),
-                            elevation = ButtonDefaults.buttonElevation(
-                                defaultElevation = 5.dp,
-                                focusedElevation = 7.dp,
-                            ),
-                            modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
-                        ) {
-                            Text(trackerDialogState.dismissButtonText)
+                        if (trackerDialogState.showDismissButton) {
+                            TextButton(
+                                onClick = {
+                                    trackerDialogState.onDismiss()
+                                },
+                                colors = ButtonColors(
+                                    containerColor = Color.White,
+                                    contentColor = BustleSpotRed,
+                                    disabledContainerColor = Color.Gray,
+                                    disabledContentColor = Color.Black
+                                ),
+                                shape = RoundedCornerShape(5.dp),
+                                elevation = ButtonDefaults.buttonElevation(
+                                    defaultElevation = 5.dp,
+                                    focusedElevation = 7.dp,
+                                ),
+                                modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                            ) {
+                                Text(trackerDialogState.dismissButtonText!!)
+                            }
+                        } else {
+                            null
                         }
-                    })
+                    }
+                )
             }
         }
     }

@@ -1,19 +1,18 @@
 package org.softsuave.bustlespot.utils
 
 import org.koin.java.KoinJavaComponent.inject
-import org.softsuave.bustlespot.accessability.AccessibilityPermission
-import org.softsuave.bustlespot.screenshot.ComponentActivityReference
+import kotlin.jvm.java
 
 actual fun requestPermission(
     onPermissionGranted: () -> Unit,
 ) {
-    val accessibilityPermission: AccessibilityPermission by inject(AccessibilityPermission::class.java)
-//    val mediaProjection = MediaProjection(
+//    val accessibilityPermission: AccessibilityPermission by inject(AccessibilityPermission::class.java)
+////    val mediaProjection = MediaProjection(
+////    ComponentActivityReference.getActivity()
 //    ComponentActivityReference.getActivity()
-    ComponentActivityReference.getActivity()
-    accessibilityPermission.requestAccessibilityPermission(
-        onPermissionGranted = {
-            onPermissionGranted()
-        }
-    )
+//    accessibilityPermission.requestAccessibilityPermission(
+//        onPermissionGranted = {
+//            onPermissionGranted()
+//        }
+//    )
 }
