@@ -71,6 +71,7 @@ statelyCommon = "2.0.5"
 adaptiveAndroid = "1.0.0"
 workRuntimeKtx = "2.10.0"
 compass = "1.2.2"
+accompanist-permissions = "0.32.0"
 [libraries]
 
 android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "androidDriver" }
@@ -128,6 +129,8 @@ compass-geocoder = { module = "dev.jordond.compass:geocoder", version.ref = "com
 compass-geocoder-mobile = { module = "dev.jordond.compass:geocoder-mobile", version.ref = "compass" }
 compass-geolocation = { module = "dev.jordond.compass:geolocation", version.ref = "compass" }
 compass-geolocation-mobile = { module = "dev.jordond.compass:geolocation-mobile", version.ref = "compass" }
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist-permissions" }
+
 
 [plugins]
 
