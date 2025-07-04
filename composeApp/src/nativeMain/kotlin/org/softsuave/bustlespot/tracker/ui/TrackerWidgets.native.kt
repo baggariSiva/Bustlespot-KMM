@@ -1,16 +1,18 @@
 package org.softsuave.bustlespot.tracker.ui
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
+import org.softsuave.bustlespot.Log
 import platform.CoreLocation.CLLocationCoordinate2DMake
 import platform.MapKit.*
 import platform.darwin.NSObject
-import kotlin.native.concurrent.freeze
-
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -19,7 +21,9 @@ actual fun MapViewMobile(
     modifier: Modifier,
     onMarkerClick: (Coordinate) -> Unit
 ) {
-    // Hold reference to delegate to prevent GC
+    Log.d("MapViewMobile Updating MapView with centerCoordinate: $centerCoordinate")
+
+    // Delegate must persist across recompositions
     val delegateRef = remember {
         object : NSObject(), MKMapViewDelegateProtocol {
             override fun mapView(
@@ -33,13 +37,16 @@ actual fun MapViewMobile(
                     }
                 }
             }
-        }.freeze()
+        }
     }
 
+    // UIKitView with a dynamic update block
     UIKitView(
         factory = {
             MKMapView().apply {
-                // Set region
+                delegate = delegateRef
+
+                // Set initial region
                 setRegion(
                     MKCoordinateRegionMakeWithDistance(
                         centerCoordinate = CLLocationCoordinate2DMake(
@@ -52,9 +59,7 @@ actual fun MapViewMobile(
                     animated = false
                 )
 
-                delegate = delegateRef
-
-                // Add annotation
+                // Initial marker
                 val annotation = MKPointAnnotation(
                     coordinate = CLLocationCoordinate2DMake(
                         centerCoordinate.latitude,
@@ -64,35 +69,30 @@ actual fun MapViewMobile(
                 addAnnotation(annotation)
             }
         },
-        modifier = modifier,
-        update = { view ->
-            // Update region and annotation on coordinate change
-            view.setRegion(
-                region = MKCoordinateRegionMake(
-                    centerCoordinate = CLLocationCoordinate2DMake(
-                        centerCoordinate.latitude,
-                        centerCoordinate.longitude
-                            ),
-                     span = MKCoordinateSpanMake(
-                         latitudeDelta = 0.01,
-                         longitudeDelta = 0.01
-                     )
+        modifier = modifier.fillMaxSize(),
+        update = { mapView ->
+            Log.d("MapViewMobile Updating map region to: $centerCoordinate")
+
+            val newCoordinate = CLLocationCoordinate2DMake(
+                centerCoordinate.latitude,
+                centerCoordinate.longitude
+            )
+
+            // Update map region
+            mapView.setRegion(
+                MKCoordinateRegionMake(
+                    centerCoordinate = newCoordinate,
+                    span = MKCoordinateSpanMake(0.01, 0.01)
                 ),
                 animated = true
             )
 
-            // Remove existing annotations
-            val annotations = view.annotations
-            view.removeAnnotations(annotations)
+            // Clear previous annotations
+            mapView.removeAnnotations(mapView.annotations)
 
-            // Add updated annotation
-            val annotation = MKPointAnnotation(
-                coordinate = CLLocationCoordinate2DMake(
-                    centerCoordinate.latitude,
-                    centerCoordinate.longitude
-                )
-            )
-            view.addAnnotation(annotation = annotation)
+            // Add new annotation
+            val annotation = MKPointAnnotation(newCoordinate)
+            mapView.addAnnotation(annotation)
         }
     )
 }

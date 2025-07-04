@@ -1,16 +1,26 @@
 package org.softsuave.bustlespot.tracker.ui
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -22,25 +32,36 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import bustlespot.composeapp.generated.resources.Res
+import bustlespot.composeapp.generated.resources.ic_password_visible
+import coil3.Bitmap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.softsuave.bustlespot.APP_VERSION
+import org.softsuave.bustlespot.AlertMessageDialog
+import org.softsuave.bustlespot.ImageSourceOptionDialog
 import org.softsuave.bustlespot.Log
 import org.softsuave.bustlespot.PlatFormType
-import org.softsuave.bustlespot.Platform
 import org.softsuave.bustlespot.auth.utils.CustomAlertDialog
 import org.softsuave.bustlespot.auth.utils.LoadingDialog
 import org.softsuave.bustlespot.auth.utils.LoadingScreen
@@ -58,6 +79,12 @@ import org.softsuave.bustlespot.tracker.scheduleWork
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
 import org.softsuave.bustlespot.utils.BustleSpotRed
 import org.softsuave.bustlespot.utils.handleBackPress
+import org.softsuave.bustlespot.shared.PermissionCallback
+import org.softsuave.bustlespot.shared.PermissionStatus
+import org.softsuave.bustlespot.shared.PermissionType
+import org.softsuave.bustlespot.shared.createPermissionsManager
+import org.softsuave.bustlespot.shared.rememberCameraManager
+import org.softsuave.bustlespot.shared.rememberGalleryManager
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -104,6 +131,99 @@ fun TrackerScreen(
     val geoFenceInfo by homeViewModel.geoFenceInfo.collectAsState()
     val coordinateInfo by homeViewModel.coordinateInfo.collectAsState()
     val isOnSiteSelected by homeViewModel.isOnSiteSelected.collectAsState()
+
+    val imageBitmap = remember { mutableStateListOf<ImageBitmap?>() }
+    var imageSourceOptionDialog by remember { mutableStateOf(value = false) }
+    var launchCamera by remember { mutableStateOf(value = false) }
+    var launchGallery by remember { mutableStateOf(value = false) }
+    var launchSetting by remember { mutableStateOf(value = false) }
+    var permissionRationalDialog by remember { mutableStateOf(value = false) }
+    val permissionsManager = createPermissionsManager(object : PermissionCallback {
+        override fun onPermissionStatus(
+            permissionType: PermissionType,
+            status: PermissionStatus
+        ) {
+            when (status) {
+                PermissionStatus.GRANTED -> {
+                    when (permissionType) {
+                        PermissionType.CAMERA -> launchCamera = true
+                        PermissionType.GALLERY -> launchGallery = true
+                    }
+                }
+
+                else -> {
+                    permissionRationalDialog = true
+                }
+            }
+        }
+
+
+    })
+
+    val cameraManager = rememberCameraManager {
+        coroutineScope.launch {
+            val bitmap = withContext(Dispatchers.Default) {
+                it?.toImageBitmap()
+            }
+            imageBitmap.add(bitmap)
+        }
+    }
+
+    val galleryManager = rememberGalleryManager {
+        coroutineScope.launch {
+            val bitmap = withContext(Dispatchers.Default) {
+                it?.toImageBitmap()
+            }
+            imageBitmap.add(bitmap)
+        }
+    }
+    if (imageSourceOptionDialog) {
+        ImageSourceOptionDialog(onDismissRequest = {
+            imageSourceOptionDialog = false
+        }, onGalleryRequest = {
+            imageSourceOptionDialog = false
+            launchGallery = true
+        }, onCameraRequest = {
+            imageSourceOptionDialog = false
+            launchCamera = true
+        })
+    }
+    if (launchGallery) {
+        if (permissionsManager.isPermissionGranted(PermissionType.GALLERY)) {
+            galleryManager.launch()
+        } else {
+            permissionsManager.askPermission(PermissionType.GALLERY)
+        }
+        launchGallery = false
+    }
+    if (launchCamera) {
+        if (permissionsManager.isPermissionGranted(PermissionType.CAMERA)) {
+            cameraManager.launch()
+        } else {
+            permissionsManager.askPermission(PermissionType.CAMERA)
+        }
+        launchCamera = false
+    }
+    if (launchSetting) {
+        permissionsManager.launchSettings()
+        launchSetting = false
+    }
+    if (permissionRationalDialog) {
+        AlertMessageDialog(
+            title = "Permission Required",
+            message = "To set your profile picture, please grant this permission. You can manage permissions in your device settings.",
+            positiveButtonText = "Settings",
+            negativeButtonText = "Cancel",
+            onPositiveClick = {
+                permissionRationalDialog = false
+                launchSetting = true
+
+            },
+            onNegativeClick = {
+                permissionRationalDialog = false
+            })
+
+    }
 
 
     LaunchedEffect(key1 = Unit) {
@@ -406,8 +526,72 @@ fun TrackerScreen(
                                 PlatFormType.IOS, PlatFormType.ANDROID -> {
                                     MapSection(
                                         modifier = Modifier.height(350.dp),
-                                        centerCoordinate = coordinateInfo
+                                        centerCoordinate = coordinateInfo,
                                     )
+                                    Column(
+                                        modifier = modifier.fillMaxWidth(0.85f)
+                                            .padding(top = 16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        val imageBitmaps = remember { mutableStateListOf<Bitmap>() }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize(),
+                                        ) {
+                                            LazyRow(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                contentPadding = PaddingValues(horizontal = 16.dp)
+                                            ) {
+                                                items(imageBitmap.size) { index ->
+                                                    Image(
+                                                        bitmap = imageBitmap[index]
+                                                            ?: ImageBitmap(1, 1),
+                                                        contentDescription = "Image",
+                                                        modifier = Modifier
+                                                            .size(100.dp).background(
+                                                                color = Color.White,
+                                                                shape = RoundedCornerShape(8.dp)
+                                                            ),
+                                                        contentScale = ContentScale.Crop
+                                                    )
+                                                }
+
+
+                                                item {
+                                                    Column(
+                                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                                        verticalArrangement = Arrangement.Center,
+                                                        modifier = Modifier
+                                                            .clickable {
+                                                                imageSourceOptionDialog = true
+                                                            }
+                                                            .padding(8.dp)
+                                                    ) {
+                                                        Icon(
+                                                            Icons.Default.Add,
+                                                            contentDescription = "Add Image",
+                                                            tint = Color.White,
+                                                            modifier = Modifier
+                                                                .size(40.dp)
+                                                                .background(
+                                                                    Color.LightGray,
+                                                                    shape = CircleShape
+                                                                )
+                                                                .padding(8.dp)
+                                                        )
+                                                        Text(
+                                                            text = "Upload Image"
+                                                        )
+                                                    }
+
+                                                }
+                                            }
+                                        }
+
+                                    }
                                 }
 
                                 PlatFormType.DESKTOP -> {

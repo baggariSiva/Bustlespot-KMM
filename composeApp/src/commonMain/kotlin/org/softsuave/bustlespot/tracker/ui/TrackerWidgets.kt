@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -46,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -62,6 +64,7 @@ import androidx.compose.ui.window.PopupProperties
 import bustlespot.composeapp.generated.resources.Res
 import bustlespot.composeapp.generated.resources.ic_drop_down
 import bustlespot.composeapp.generated.resources.ic_drop_up
+import bustlespot.composeapp.generated.resources.ic_password_visible
 import bustlespot.composeapp.generated.resources.screen
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -455,7 +458,6 @@ fun MapSection(
             centerCoordinate = centerCoordinate,
             onMarkerClick = onMarkerClick
         )
-        UploadImageSection()
     }
 }
 
@@ -522,31 +524,7 @@ fun UploadImageSection(
     imageBitmap: ImageBitmap? = null,
     imageLoader: ImageLoader? = null
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Row {
-            Icon(
-                Icons.Rounded.Place,
-                contentDescription = "Upload Image",
-                modifier = Modifier.size(24.dp).padding(end = 8.dp)
-            )
-            Text(
-                text = "Upload Image",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable(
-                    onClickLabel = "clicked",
-                    role = Role.Button
-                ) {
-                    onClickUploadImage()
-                }.pointerHoverIcon(PointerIcon.Hand),
-                color = BustleSpotRed
-            )
-        }
-    }
+
 }
 
 
