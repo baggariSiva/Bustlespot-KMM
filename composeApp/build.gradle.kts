@@ -125,6 +125,7 @@ kotlin {
 
             // AndroidX
             implementation(libs.androidx.startup.runtime)
+            implementation(libs.accompanist.permissions)
         }
 
         desktopMain.dependencies {
