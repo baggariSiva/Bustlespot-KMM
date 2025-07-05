@@ -22,7 +22,7 @@ data class ActivityData(
     @SerialName("is_billable") var billable: String? = "",
     @SerialName("notes") var notes: String? = null,
     @SerialName("organisationId") var orgId: Int? = 0,
-    @SerialName("uri") var uri: String? = null,
+    @SerialName("activity_screenshot") var uri: List<String?> = emptyList<String>(),
     @SerialName("idle_time") var unTrackedTime: Long? = null,
     var longitude: Double?= null,
     var latitude: Double?= null

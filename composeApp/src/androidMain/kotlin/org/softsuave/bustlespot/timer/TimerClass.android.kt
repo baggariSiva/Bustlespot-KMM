@@ -259,7 +259,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = (mouseKeyEvents.value + keyboradKeyEvents.value) % 100,
             billable = "",
             notes = "",
-            uri = currentImageUri.value
         )
         startTime = Clock.System.now()
         canCallApi.value = false
@@ -276,7 +275,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             billable = "",
             notes = "",
             unTrackedTime = idealTime.value.toLong(),
-            uri = currentImageUri.value
         )
         startTime = Clock.System.now()
         mouseKeyEvents.value = 0
@@ -314,7 +312,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = (mouseKeyEvents.value + keyboradKeyEvents.value) % 100,
             billable = "",
             notes = "",
-            uri = currentImageUri.value
         )
         storeStartTime = Clock.System.now()
         return activity

@@ -1,5 +1,7 @@
 package org.softsuave.bustlespot.tracker.ui
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +9,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -26,6 +31,7 @@ import org.softsuave.bustlespot.network.NetworkMonitor
 import org.softsuave.bustlespot.timer.TrackerModule
 import org.softsuave.bustlespot.tracker.data.TrackerRepository
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
+import org.softsuave.bustlespot.utils.convertImageBitmapToBase64
 import kotlin.math.roundToInt
 
 class HomeViewModel(
@@ -34,7 +40,8 @@ class HomeViewModel(
     private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
-    private var _platFormType: MutableStateFlow<PlatFormType> = MutableStateFlow(getPlatform().platformType)
+    private var _platFormType: MutableStateFlow<PlatFormType> =
+        MutableStateFlow(getPlatform().platformType)
     val platFormType = _platFormType.asStateFlow()
 
     private val trackerModule = TrackerModule(viewModelScope)
@@ -47,23 +54,38 @@ class HomeViewModel(
     var canCallApi: MutableStateFlow<Boolean> = trackerModule.canCallApi
     var canStoreApiCall: MutableStateFlow<Boolean> = trackerModule.canStoreApiCall
     var lastSyncTime: MutableStateFlow<Long> = MutableStateFlow(0)
+    val _imageBitmap: MutableStateFlow<MutableList<ImageBitmap?>> = MutableStateFlow(mutableListOf<ImageBitmap?>())
+    val imageBitmap: StateFlow<List<ImageBitmap?>> = _imageBitmap.asStateFlow()
+
+    fun addImage(image: ImageBitmap?) {
+        image?.let {
+            _imageBitmap.value = _imageBitmap.value.toMutableList().apply { add(it) }
+        }
+    }
+
 
 
     fun startTrackerTimer() = trackerModule.startTimer()
 
 
-
     private fun constructPostActivityRequest(
         activityDataOfModule: ActivityData
     ): ActivityData {
+
+        val base64 = imageBitmap.value.map { image ->
+            convertImageBitmapToBase64(image ?: ImageBitmap(1, 1))?.substringAfter(":") ?: ""
+        }.filter { it.isNotEmpty() }
+
+        println("Base64 Image List: ${base64.size}")
+
         activityDataOfModule.apply {
             this.taskId = _selectedTask.value?.taskId
             this.projectId = _selectedProject.value?.projectId
-            if (_isOnSiteSelected.value) {
-                this.uri = null
+//            if (_isOnSiteSelected.value) {
+                this.uri = base64
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
-            }
+//            }
         }
         return activityDataOfModule
     }
