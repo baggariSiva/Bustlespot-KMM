@@ -16,7 +16,6 @@ fun com.example.ActivityData.toDomain(): ActivityData {
         billable = this.billable,
         notes = this.notes,
         orgId = this.organisationId?.toInt(),
-        uri = this.uri,
         unTrackedTime = this.unTrackedTime
     )
 }

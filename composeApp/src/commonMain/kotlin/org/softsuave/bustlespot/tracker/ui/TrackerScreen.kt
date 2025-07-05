@@ -52,6 +52,7 @@ import bustlespot.composeapp.generated.resources.Res
 import bustlespot.composeapp.generated.resources.ic_password_visible
 import coil3.Bitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
@@ -132,7 +133,7 @@ fun TrackerScreen(
     val coordinateInfo by homeViewModel.coordinateInfo.collectAsState()
     val isOnSiteSelected by homeViewModel.isOnSiteSelected.collectAsState()
 
-    val imageBitmap = remember { mutableStateListOf<ImageBitmap?>() }
+    val imageBitmap by homeViewModel.imageBitmap.collectAsState()
     var imageSourceOptionDialog by remember { mutableStateOf(value = false) }
     var launchCamera by remember { mutableStateOf(value = false) }
     var launchGallery by remember { mutableStateOf(value = false) }
@@ -165,16 +166,16 @@ fun TrackerScreen(
             val bitmap = withContext(Dispatchers.Default) {
                 it?.toImageBitmap()
             }
-            imageBitmap.add(bitmap)
+            homeViewModel.addImage(bitmap)
         }
     }
 
     val galleryManager = rememberGalleryManager {
         coroutineScope.launch {
-            val bitmap = withContext(Dispatchers.Default) {
+            val bitmap = withContext(Dispatchers.IO) {
                 it?.toImageBitmap()
             }
-            imageBitmap.add(bitmap)
+            homeViewModel.addImage(bitmap)
         }
     }
     if (imageSourceOptionDialog) {
@@ -534,8 +535,6 @@ fun TrackerScreen(
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        val imageBitmaps = remember { mutableStateListOf<Bitmap>() }
-
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize(),

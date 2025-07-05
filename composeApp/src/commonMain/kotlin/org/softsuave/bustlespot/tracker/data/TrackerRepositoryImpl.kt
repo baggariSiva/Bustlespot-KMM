@@ -262,7 +262,7 @@ class TrackerRepositoryImpl(
                     billable = activityData.billable,
                     notes = activityData.notes,
                     organisationId = activityData.orgId?.toLong(),
-                    uri = activityData.uri,
+                    uri = null,
                     unTrackedTime = activityData.unTrackedTime,
                     isFailed = 1
                 )
@@ -313,7 +313,7 @@ class TrackerRepositoryImpl(
                         billable = activityData.billable,
                         notes = activityData.notes,
                         organisationId = activityData.orgId?.toLong(),
-                        uri = activityData.uri,
+                        uri = null,
                         unTrackedTime = activityData.unTrackedTime,
                         isFailed = 0
                     )
