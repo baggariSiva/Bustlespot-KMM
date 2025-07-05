@@ -2,6 +2,8 @@ package org.softsuave.bustlespot.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import coil3.BitmapImage
 
 expect fun isAndroid(): Boolean
 
@@ -10,6 +12,8 @@ expect fun isAndroid(): Boolean
 expect fun handleBackPress(
     onBack: () -> Unit = {}
 )
+
+expect fun convertImageBitmapToBase64(image: ImageBitmap) : String?
 
 
 val BustleSpotRed : Color
