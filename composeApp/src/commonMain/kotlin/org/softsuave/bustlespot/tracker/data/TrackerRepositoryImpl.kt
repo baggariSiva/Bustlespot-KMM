@@ -12,6 +12,8 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.flow.Flow
@@ -71,9 +73,22 @@ class TrackerRepositoryImpl(
             append(TASK_ID, activityData.taskId.toString())
             append(IS_BILLABLE, activityData.billable.toString())
 
-            activityData.uri?.let {
-                append(ACTIVITY_SCREENSHOT, it.toString())
-            }
+//            activityData.uri.let  { uris ->
+//                uris.forEachIndexed { index, uri ->
+//                    val bytes = uri
+//                    val fileName = "image_$index.jpg"
+//                    bytes?.let {
+//                        append(
+//                            ACTIVITY_SCREENSHOT,
+//                            it,
+//                            Headers.build {
+//                                append(HttpHeaders.ContentDisposition, "form-data; name=\"files\"; filename=\"$fileName\"")
+//                                append(HttpHeaders.ContentType, "image/jpeg")
+//                            }
+//                        )
+//                    }
+//                }
+//            }
 
             activityData.unTrackedTime?.let {
                 append(IDLE_TIME, it.toString())
