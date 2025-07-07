@@ -155,21 +155,11 @@ fun TrackerScreen(
     })
 
     val cameraManager = rememberCameraManager {
-        coroutineScope.launch {
-            val bitmap = withContext(Dispatchers.Default) {
-                it?.toImageBitmap()
-            }
-            homeViewModel.addImage(bitmap)
-        }
+            homeViewModel.addImageBytes(it)
     }
 
     val galleryManager = rememberGalleryManager {
-        coroutineScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                it?.toImageBitmap()
-            }
-            homeViewModel.addImage(bitmap)
-        }
+            homeViewModel.addImageBytes(it)
     }
     if (imageSourceOptionDialog) {
         ImageSourceOptionDialog(onDismissRequest = {
@@ -228,21 +218,21 @@ fun TrackerScreen(
 
 
 
-    LaunchedEffect(idleTime) {
-        if (idleTime > customeTimeForIdleTime && !homeViewModel.trackerDialogState.value.isDialogShown) {
-            onFocusReceived.invoke()
-            homeViewModel.handleTrackerDialogEvents(trackerDialogEvents = TrackerDialogEvents.ShowIdleTimeDialog) {
-                if (idleTime.seconds.inWholeMinutes.minutes < 120.minutes) {
-                    homeViewModel.startPostingUntrackedActivity()
-                }
-            }
-//            showIdleDialog = true
-            homeViewModel.stopTrackerTimer()
-            homeViewModel.updateSelectedTaskTime(trackerTimer, idleTime)
-            homeViewModel.updateTrackerTimer()
-//            homeViewModel.postUpdateActivity()
-        }
-    }
+//    LaunchedEffect(idleTime) {
+//        if (idleTime > customeTimeForIdleTime && !homeViewModel.trackerDialogState.value.isDialogShown) {
+//            onFocusReceived.invoke()
+//            homeViewModel.handleTrackerDialogEvents(trackerDialogEvents = TrackerDialogEvents.ShowIdleTimeDialog) {
+//                if (idleTime.seconds.inWholeMinutes.minutes < 120.minutes) {
+//                    homeViewModel.startPostingUntrackedActivity()
+//                }
+//            }
+////            showIdleDialog = true
+//            homeViewModel.stopTrackerTimer()
+//            homeViewModel.updateSelectedTaskTime(trackerTimer, idleTime)
+//            homeViewModel.updateTrackerTimer()
+////            homeViewModel.postUpdateActivity()
+//        }
+//    }
 
     DisposableEffect(Unit) {
         onDispose {

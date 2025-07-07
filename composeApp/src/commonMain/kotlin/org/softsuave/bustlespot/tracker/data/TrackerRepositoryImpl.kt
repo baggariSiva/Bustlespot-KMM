@@ -61,12 +61,12 @@ class TrackerRepositoryImpl(
         const val IDLE_TIME = "idle_time"
         const val LAST_SCREENSHOT_TIME = "last_screenshot_time"
         const val ACTIVITY_SCREENSHOT = "activity_screenshot"
-        const val LATITUDE="latitude"
-        const val LONGITUDE="longitude"
+        const val LATITUDE = "latitude"
+        const val LONGITUDE = "longitude"
 
 
         fun buildFormData(activityData: ActivityData) = formData {
-            append(PROJECT_ID,  activityData.projectId ?: "")
+            append(PROJECT_ID, activityData.projectId ?: "")
             append(KEYBOARD_ACTIVITY, activityData.keyboardActivity.toString())
             append(MOUSE_ACTIVITY, activityData.mouseActivity.toString())
             append(TOTAL_ACTIVITY_PERCENTAGE, activityData.totalActivity.toString())
@@ -77,21 +77,18 @@ class TrackerRepositoryImpl(
 
             activityData.uri.forEachIndexed { index, uri ->
                 val fileName = "image_$index.jpg"
-                uri?.let {
-                    val bytes = bitmapToByteArray(it)
-                    bytes?.let { data ->
-                        append(
-                            ACTIVITY_SCREENSHOT,
-                            value = data,
-                            Headers.build {
-                                append(
-                                    HttpHeaders.ContentDisposition,
-                                    "form-data; name=\"activity_screenshot\"; filename=\"$fileName\""
-                                )
-                                append(HttpHeaders.ContentType, "image/jpeg")
-                            }
-                        )
-                    }
+                uri?.let { data ->
+                    append(
+                        ACTIVITY_SCREENSHOT,
+                        value = data,
+                        Headers.build {
+                            append(
+                                HttpHeaders.ContentDisposition,
+                                "form-data; name=\"activity_screenshot\"; filename=\"$fileName\""
+                            )
+                            append(HttpHeaders.ContentType, "image/jpeg")
+                        }
+                    )
                 }
             }
 
