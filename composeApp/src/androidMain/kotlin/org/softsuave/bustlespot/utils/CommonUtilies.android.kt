@@ -34,3 +34,17 @@ actual fun convertImageBitmapToBase64(image: ImageBitmap): String? {
         return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
     }
 }
+
+actual fun bitmapToByteArray(bitmap: Any): ByteArray? {
+    return try {
+        if (bitmap is Bitmap) {
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            stream.toByteArray()
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+}

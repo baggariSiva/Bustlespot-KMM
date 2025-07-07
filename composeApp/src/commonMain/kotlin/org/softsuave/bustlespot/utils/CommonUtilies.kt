@@ -16,6 +16,9 @@ expect fun handleBackPress(
 expect fun convertImageBitmapToBase64(image: ImageBitmap) : String?
 
 
+expect fun bitmapToByteArray(bitmap: Any): ByteArray?
+
+
 val BustleSpotRed : Color
     get() = Color(242, 60, 75, 255)
 

@@ -96,6 +96,10 @@ kotlin {
             implementation(libs.compass.geolocation)
 //            implementation(libs.compass.geolocation.mobile)
             api("io.github.mirzemehdi:kmpnotifier:1.5.1")
+
+            //kamal for image
+//            implementation("media.kamel:kamel-image:1.0.6")
+//            implementation("media.kamel:kamel-decoder-image-bitmap:1.0.6")
         }
 
         commonTest.dependencies {
