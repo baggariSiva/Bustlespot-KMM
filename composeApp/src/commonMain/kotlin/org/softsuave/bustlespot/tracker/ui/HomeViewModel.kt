@@ -1,17 +1,22 @@
 package org.softsuave.bustlespot.tracker.ui
 
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.forEach
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -28,6 +33,7 @@ import org.softsuave.bustlespot.data.network.models.response.TaskData
 import org.softsuave.bustlespot.getPlatform
 import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.network.NetworkMonitor
+import org.softsuave.bustlespot.shared.SharedImage
 import org.softsuave.bustlespot.timer.TrackerModule
 import org.softsuave.bustlespot.tracker.data.TrackerRepository
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
@@ -54,15 +60,33 @@ class HomeViewModel(
     var canCallApi: MutableStateFlow<Boolean> = trackerModule.canCallApi
     var canStoreApiCall: MutableStateFlow<Boolean> = trackerModule.canStoreApiCall
     var lastSyncTime: MutableStateFlow<Long> = MutableStateFlow(0)
-    val _imageBitmap: MutableStateFlow<MutableList<ImageBitmap?>> = MutableStateFlow(mutableListOf<ImageBitmap?>())
-    val imageBitmap: StateFlow<List<ImageBitmap?>> = _imageBitmap.asStateFlow()
+    val _imageBytes: MutableStateFlow<MutableList<SharedImage?>> =
+        MutableStateFlow(mutableListOf<SharedImage?>())
+    val imageBitmap: StateFlow<List<ImageBitmap?>> = _imageBytes.map { bytes ->
+        bytes.map { it?.toImageBitmap() }
+    }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+    val imageBytes: StateFlow<List<ByteArray?>> = _imageBytes
+        .map { bytes ->
+            bytes.map { it?.toByteArray() }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
-    fun addImage(image: ImageBitmap?) {
+    fun addImageBytes(image: SharedImage?) {
         image?.let {
-            _imageBitmap.value = _imageBitmap.value.toMutableList().apply { add(it) }
+            _imageBytes.value = _imageBytes.value.toMutableList().apply { add(it) }
         }
     }
-
 
 
     fun startTrackerTimer() = trackerModule.startTimer()
@@ -75,7 +99,7 @@ class HomeViewModel(
             this.taskId = _selectedTask.value?.taskId
             this.projectId = _selectedProject.value?.projectId
             if (_platFormType.value != PlatFormType.DESKTOP) {
-                this.uri = _imageBitmap.value
+                this.uri = imageBytes.value
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
             }
