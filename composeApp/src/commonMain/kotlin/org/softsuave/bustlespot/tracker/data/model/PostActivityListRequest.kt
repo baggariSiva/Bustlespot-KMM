@@ -1,5 +1,6 @@
 package org.softsuave.bustlespot.tracker.data.model
 
+import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,7 +23,7 @@ data class ActivityData(
     @SerialName("is_billable") var billable: String? = "",
     @SerialName("notes") var notes: String? = null,
     @SerialName("organisationId") var orgId: Int? = 0,
-    @SerialName("activity_screenshot") var uri: List<ByteArray?> = emptyList<ByteArray>(),
+    @SerialName("activity_screenshot") var uri: List<ImageBitmap?> = emptyList<ImageBitmap>(),
     @SerialName("idle_time") var unTrackedTime: Long? = null,
     var longitude: Double?= null,
     var latitude: Double?= null

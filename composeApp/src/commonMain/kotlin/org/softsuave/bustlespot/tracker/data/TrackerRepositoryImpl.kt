@@ -40,6 +40,7 @@ import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
 import org.softsuave.bustlespot.tracker.data.model.ActivityDataResponse
 import org.softsuave.bustlespot.tracker.data.model.PostActivityRequest
+import org.softsuave.bustlespot.utils.bitmapToByteArray
 
 class TrackerRepositoryImpl(
     private val client: HttpClient,
@@ -73,22 +74,22 @@ class TrackerRepositoryImpl(
             append(TASK_ID, activityData.taskId.toString())
             append(IS_BILLABLE, activityData.billable.toString())
 
-//            activityData.uri.let  { uris ->
-//                uris.forEachIndexed { index, uri ->
-//                    val bytes = uri
-//                    val fileName = "image_$index.jpg"
-//                    bytes?.let {
-//                        append(
-//                            ACTIVITY_SCREENSHOT,
-//                            it,
-//                            Headers.build {
-//                                append(HttpHeaders.ContentDisposition, "form-data; name=\"files\"; filename=\"$fileName\"")
-//                                append(HttpHeaders.ContentType, "image/jpeg")
-//                            }
-//                        )
-//                    }
-//                }
-//            }
+            activityData.uri.let  { uris ->
+                uris.forEachIndexed { index, uri ->
+                    val bytes = uri
+                    val fileName = "image_$index.jpg"
+                    bytes?.let {
+                        append(
+                            ACTIVITY_SCREENSHOT,
+                            value = bitmapToByteArray(it)!!,
+                            Headers.build {
+                                append(HttpHeaders.ContentDisposition, "form-data; name=\"files\"; filename=\"$fileName\"")
+                                append(HttpHeaders.ContentType, "image/jpeg")
+                            }
+                        )
+                    }
+                }
+            }
 
             activityData.unTrackedTime?.let {
                 append(IDLE_TIME, it.toString())
