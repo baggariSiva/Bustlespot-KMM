@@ -71,21 +71,14 @@ class HomeViewModel(
     private fun constructPostActivityRequest(
         activityDataOfModule: ActivityData
     ): ActivityData {
-
-        val base64 = imageBitmap.value.map { image ->
-            convertImageBitmapToBase64(image ?: ImageBitmap(1, 1))?.substringAfter(":") ?: ""
-        }.filter { it.isNotEmpty() }
-
-        println("Base64 Image List: ${base64.size}")
-
         activityDataOfModule.apply {
             this.taskId = _selectedTask.value?.taskId
             this.projectId = _selectedProject.value?.projectId
-//            if (_isOnSiteSelected.value) {
-                this.uri = base64
+            if (_platFormType.value != PlatFormType.DESKTOP) {
+                this.uri = _imageBitmap.value
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
-//            }
+            }
         }
         return activityDataOfModule
     }
