@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -47,7 +45,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -64,7 +63,6 @@ import androidx.compose.ui.window.PopupProperties
 import bustlespot.composeapp.generated.resources.Res
 import bustlespot.composeapp.generated.resources.ic_drop_down
 import bustlespot.composeapp.generated.resources.ic_drop_up
-import bustlespot.composeapp.generated.resources.ic_password_visible
 import bustlespot.composeapp.generated.resources.screen
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -72,6 +70,7 @@ import coil3.compose.LocalPlatformContext
 import org.jetbrains.compose.resources.imageResource
 import org.jetbrains.compose.resources.painterResource
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.PlatFormType
 import org.softsuave.bustlespot.auth.utils.secondsToTime
 import org.softsuave.bustlespot.auth.utils.secondsToTimeFormat
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
@@ -86,6 +85,7 @@ fun <T> DropDownSelectionList(
     var isMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
     val density = LocalDensity.current
+    val focusRequester = remember { FocusRequester() } //
 
     val isFocused by mutableInteractionSource.collectIsPressedAsState()
     LaunchedEffect(isFocused) {
@@ -93,6 +93,11 @@ fun <T> DropDownSelectionList(
             isMenuExpanded = true
         }
         Log.d("isFocused $isFocused")
+    }
+    LaunchedEffect(isMenuExpanded) {
+        if (!isMenuExpanded) {
+            focusRequester.freeFocus() // Unfocus the TextField
+        }
     }
 
     // Compute max height once based on density
@@ -129,7 +134,7 @@ fun <T> DropDownSelectionList(
             },
             interactionSource = mutableInteractionSource,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(0.85f),
+            modifier = Modifier.fillMaxWidth(0.85f).focusRequester(focusRequester),
             trailingIcon = {
                 IconButton(
                     onClick = {
@@ -225,7 +230,7 @@ fun TimerSessionSection(
     homeViewModel: HomeViewModel,
     idleTime: Int,
     isTrackerRunning: Boolean,
-    organisationId: String
+    platFormType: PlatFormType
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Column(
@@ -304,23 +309,25 @@ fun TimerSessionSection(
                 )
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "IdleTime",
-                color = BustleSpotRed,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = secondsToTimeFormat(idleTime),
-                color = Color.Black,
-            )
+        if(platFormType== PlatFormType.DESKTOP) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "IdleTime",
+                    color = BustleSpotRed,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = secondsToTimeFormat(idleTime),
+                    color = Color.Black,
+                )
+            }
         }
     }
 }

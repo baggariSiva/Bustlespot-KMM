@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,30 +32,23 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import bustlespot.composeapp.generated.resources.Res
-import bustlespot.composeapp.generated.resources.ic_password_visible
-import coil3.Bitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import org.softsuave.bustlespot.APP_VERSION
@@ -76,16 +69,16 @@ import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.data.network.models.response.TaskData
 import org.softsuave.bustlespot.organisation.ui.BustleSpotAppBar
-import org.softsuave.bustlespot.tracker.scheduleWork
-import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
-import org.softsuave.bustlespot.utils.BustleSpotRed
-import org.softsuave.bustlespot.utils.handleBackPress
 import org.softsuave.bustlespot.shared.PermissionCallback
 import org.softsuave.bustlespot.shared.PermissionStatus
 import org.softsuave.bustlespot.shared.PermissionType
 import org.softsuave.bustlespot.shared.createPermissionsManager
 import org.softsuave.bustlespot.shared.rememberCameraManager
 import org.softsuave.bustlespot.shared.rememberGalleryManager
+import org.softsuave.bustlespot.tracker.scheduleWork
+import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
+import org.softsuave.bustlespot.utils.BustleSpotRed
+import org.softsuave.bustlespot.utils.handleBackPress
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -351,7 +344,7 @@ fun TrackerScreen(
             onDismissClick = {
                 homeViewModel.handleDropDownEvents(DropDownEvents.OnModuleDismiss)
             },
-            readOnly = true
+            readOnly = PlatFormType.DESKTOP != platformType
         )
 
     val projectDropDownSelectionData = DropDownSelectionData<Project>(
@@ -395,7 +388,8 @@ fun TrackerScreen(
         isSelected = selectedProject != null,
         onDismissClick = {
             homeViewModel.handleDropDownEvents(DropDownEvents.OnProjectDismiss)
-        }
+        },
+        readOnly = platformType != PlatFormType.DESKTOP
     )
 
     val taskDropDownSelectionData = DropDownSelectionData<TaskData>(
@@ -437,7 +431,8 @@ fun TrackerScreen(
         isSelected = selectedTask != null,
         onDismissClick = {
             homeViewModel.handleDropDownEvents(DropDownEvents.OnTaskDismiss)
-        }
+        },
+        readOnly = platformType != PlatFormType.DESKTOP
     )
 
     fun getDropDownSelectionData() = listOf(
@@ -519,15 +514,15 @@ fun TrackerScreen(
                                 idleTime = totalIdleTime,
                                 isTrackerRunning = isTrackerRunning,
                                 taskName = selectedTask?.name ?: "",
-                                organisationId = organisationId
+                                platFormType = platformType
                             )
                         }
                         item {
                             when (platformType) {
                                 PlatFormType.IOS, PlatFormType.ANDROID -> {
                                     MapSection(
-                                        modifier = Modifier.height(350.dp),
-                                        centerCoordinate = coordinateInfo,
+                                        modifier = Modifier,
+                                        centerCoordinate = coordinateInfo
                                     )
                                     Column(
                                         modifier = modifier.fillMaxWidth(0.85f)
@@ -544,20 +539,20 @@ fun TrackerScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                                 contentPadding = PaddingValues(horizontal = 16.dp)
                                             ) {
-                                                items(imageBitmap.size) { index ->
-                                                    Image(
-                                                        bitmap = imageBitmap[index]
-                                                            ?: ImageBitmap(1, 1),
-                                                        contentDescription = "Image",
-                                                        modifier = Modifier
-                                                            .size(100.dp).background(
-                                                                color = Color.White,
-                                                                shape = RoundedCornerShape(8.dp)
-                                                            ),
-                                                        contentScale = ContentScale.Crop
-                                                    )
-                                                }
-
+                                              items(imageBitmap) { bitmap ->
+                                                  bitmap?.let { it ->
+                                                      Image(
+                                                          bitmap = it,
+                                                          contentDescription = "Image",
+                                                          modifier = Modifier
+                                                              .size(100.dp).background(
+                                                                  color = Color.White,
+                                                                  shape = RoundedCornerShape(8.dp)
+                                                              ),
+                                                          contentScale = ContentScale.Crop
+                                                      )
+                                                  }
+                                              }
 
                                                 item {
                                                     Column(
@@ -603,7 +598,9 @@ fun TrackerScreen(
                                     )
                                 }
 
-                                PlatFormType.UNKNOWN -> {}
+                                PlatFormType.UNKNOWN -> {
+                                    Text("Platform is unknown")
+                                }
                             }
                         }
 

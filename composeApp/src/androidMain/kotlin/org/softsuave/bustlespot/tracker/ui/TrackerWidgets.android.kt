@@ -2,15 +2,13 @@ package org.softsuave.bustlespot.tracker.ui
 
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
@@ -38,7 +36,7 @@ actual fun MapViewMobile(
 
     // Always create the Android view
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.height(300.dp),
         factory = {
             FragmentContainerView(it).apply {
                 id = containerId
