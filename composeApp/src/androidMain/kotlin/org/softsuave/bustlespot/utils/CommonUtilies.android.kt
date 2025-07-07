@@ -37,9 +37,10 @@ actual fun convertImageBitmapToBase64(image: ImageBitmap): String? {
 
 actual fun bitmapToByteArray(bitmap: Any): ByteArray? {
     return try {
-        if (bitmap is Bitmap) {
+        if (bitmap is ImageBitmap) {
             val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            bitmap.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream)
+            print("image screen----> ${bitmap.width}x${bitmap.height}")
             stream.toByteArray()
         } else {
             null
