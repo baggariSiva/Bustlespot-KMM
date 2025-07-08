@@ -767,8 +767,10 @@ class HomeViewModel(
                 } else {
                     if (checkTaskAndProject()) {
                         startTrackerTimer()
-                        locationViewModel.getCurrentLocation()
-                        locationViewModel.startTracking()
+                        if(_platFormType.value!=PlatFormType.DESKTOP) {
+                            locationViewModel.getCurrentLocation()
+                            locationViewModel.startTracking()
+                        }
                     }
                 }
             }
@@ -777,14 +779,18 @@ class HomeViewModel(
                 updateSelectedTaskTime(trackerTime.value, idealTime.value)
                 stopTrackerTimer()
                 stopIdleTimer()
-                locationViewModel.startTracking()
+                if(_platFormType.value!=PlatFormType.DESKTOP) {
+                    locationViewModel.stopTracking()
+                }
             }
 
             TimerEvents.UpdateTime -> TODO()
 
             TimerEvents.ResumeTimer -> {
                 resumeTrackerTimer()
-                locationViewModel.resume()
+                if(_platFormType.value!=PlatFormType.DESKTOP) {
+                    locationViewModel.resume()
+                }
             }
         }
     }

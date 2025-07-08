@@ -16,7 +16,7 @@ import org.softsuave.bustlespot.tracker.ui.Coordinate
 
 class LocationViewModel() : ViewModel() {
     val locator = MGeoLocator().getLocator()
-    private val geolocator: Geolocator = Geolocator(locator)
+    private val geolocator: Geolocator = Geolocator(locator!!)
     private val initalGeocode: Geocode = Geocode(0.0, 0.0, "")
     private var geoFenceThreshold: Double = 0.0
     private var geoFenceManager: GeoFenceManager =
