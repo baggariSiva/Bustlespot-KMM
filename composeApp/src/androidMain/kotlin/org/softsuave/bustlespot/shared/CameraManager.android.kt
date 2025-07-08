@@ -22,7 +22,7 @@ actual fun rememberCameraManager(onResult: (SharedImage?) -> Unit): CameraManage
         onResult = { success ->
             if (success) {
                 onResult.invoke(
-                    org.softsuave.bustlespot.shared.SharedImage(
+                    SharedImage(
                         BitmapUtils.getBitmapFromUri(
                             tempPhotoUri,
                             contentResolver

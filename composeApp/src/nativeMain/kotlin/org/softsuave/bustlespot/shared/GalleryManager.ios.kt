@@ -26,7 +26,7 @@ actual fun rememberGalleryManager(onResult: (SharedImage?) -> Unit): GalleryMana
                 ) as? UIImage ?: didFinishPickingMediaWithInfo.getValue(
                     UIImagePickerControllerOriginalImage
                 ) as? UIImage
-                onResult.invoke(org.softsuave.bustlespot.shared.SharedImage(image))
+                onResult.invoke(SharedImage(image))
                 picker.dismissViewControllerAnimated(true, null)
             }
         }

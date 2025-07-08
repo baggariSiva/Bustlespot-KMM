@@ -16,7 +16,7 @@ actual fun rememberGalleryManager(onResult: (SharedImage?) -> Unit): GalleryMana
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
                 onResult.invoke(
-                    org.softsuave.bustlespot.shared.SharedImage(
+                    SharedImage(
                         BitmapUtils.getBitmapFromUri(
                             uri,
                             contentResolver

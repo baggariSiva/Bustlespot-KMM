@@ -27,7 +27,7 @@ actual fun rememberCameraManager(onResult: (SharedImage?) -> Unit): CameraManage
                         ?: didFinishPickingMediaWithInfo.getValue(
                             UIImagePickerControllerOriginalImage
                         ) as? UIImage
-                onResult.invoke(org.softsuave.bustlespot.shared.SharedImage(image))
+                onResult.invoke(SharedImage(image))
                 picker.dismissViewControllerAnimated(true, null)
             }
         }
