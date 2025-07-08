@@ -1,8 +1,6 @@
 package org.softsuave.bustlespot.tracker.ui
 
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -11,7 +9,13 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import org.softsuave.bustlespot.Log
 import platform.CoreLocation.CLLocationCoordinate2DMake
-import platform.MapKit.*
+import platform.MapKit.MKAnnotationView
+import platform.MapKit.MKCoordinateRegionMake
+import platform.MapKit.MKCoordinateRegionMakeWithDistance
+import platform.MapKit.MKCoordinateSpanMake
+import platform.MapKit.MKMapView
+import platform.MapKit.MKMapViewDelegateProtocol
+import platform.MapKit.MKPointAnnotation
 import platform.darwin.NSObject
 
 @OptIn(ExperimentalForeignApi::class)

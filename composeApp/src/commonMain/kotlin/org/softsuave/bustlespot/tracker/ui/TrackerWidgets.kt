@@ -14,18 +14,23 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,10 +74,19 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import org.jetbrains.compose.resources.imageResource
 import org.jetbrains.compose.resources.painterResource
+import org.softsuave.bustlespot.AlertMessageDialog
+import org.softsuave.bustlespot.ImageSourceOptionDialog
 import org.softsuave.bustlespot.Log
 import org.softsuave.bustlespot.PlatFormType
 import org.softsuave.bustlespot.auth.utils.secondsToTime
 import org.softsuave.bustlespot.auth.utils.secondsToTimeFormat
+import org.softsuave.bustlespot.shared.PermissionCallback
+import org.softsuave.bustlespot.shared.PermissionStatus
+import org.softsuave.bustlespot.shared.PermissionType
+import org.softsuave.bustlespot.shared.SharedImage
+import org.softsuave.bustlespot.shared.createPermissionsManager
+import org.softsuave.bustlespot.shared.rememberCameraManager
+import org.softsuave.bustlespot.shared.rememberGalleryManager
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
 import org.softsuave.bustlespot.utils.BustleSpotRed
 import org.softsuave.bustlespot.utils.moveToFirst
@@ -134,7 +148,7 @@ fun <T> DropDownSelectionList(
             },
             interactionSource = mutableInteractionSource,
             singleLine = true,
-            modifier = Modifier.fillMaxWidth(0.85f).focusRequester(focusRequester),
+            modifier = Modifier.focusRequester(focusRequester),
             trailingIcon = {
                 IconButton(
                     onClick = {
@@ -234,7 +248,7 @@ fun TimerSessionSection(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Column(
-        modifier = modifier.fillMaxWidth(0.85f),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
@@ -403,7 +417,7 @@ fun ScreenShotSection(
     lastTakenImage: String? = ""
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
+        modifier = modifier.padding(top = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -447,7 +461,7 @@ fun MapSection(
     onMarkerClick: (Coordinate) -> Unit = {}
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp)
+        modifier = modifier.padding(top = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -470,6 +484,158 @@ fun MapSection(
 
 
 @Composable
+fun ImageUploadSection(modifier: Modifier = Modifier,
+                 imageBitmap : List<ImageBitmap?> = emptyList(),
+                 addImageBytes:(SharedImage?) -> Unit ={}
+                 ) {
+    var imageSourceOptionDialog by remember { mutableStateOf(value = false) }
+    var launchCamera by remember { mutableStateOf(value = false) }
+    var launchGallery by remember { mutableStateOf(value = false) }
+    var launchSetting by remember { mutableStateOf(value = false) }
+    var permissionRationalDialog by remember { mutableStateOf(value = false) }
+    val permissionsManager = createPermissionsManager(object : PermissionCallback {
+        override fun onPermissionStatus(
+            permissionType: PermissionType,
+            status: PermissionStatus
+        ) {
+            when (status) {
+                PermissionStatus.GRANTED -> {
+                    when (permissionType) {
+                        PermissionType.CAMERA -> launchCamera = true
+                        PermissionType.GALLERY -> launchGallery = true
+                    }
+                }
+
+                else -> {
+                    permissionRationalDialog = true
+                }
+            }
+        }
+
+
+    })
+
+    val cameraManager = rememberCameraManager {
+        addImageBytes(it)
+    }
+
+    val galleryManager = rememberGalleryManager {
+        addImageBytes(it)
+    }
+    if (imageSourceOptionDialog) {
+        ImageSourceOptionDialog(onDismissRequest = {
+            imageSourceOptionDialog = false
+        }, onGalleryRequest = {
+            imageSourceOptionDialog = false
+            launchGallery = true
+        }, onCameraRequest = {
+            imageSourceOptionDialog = false
+            launchCamera = true
+        })
+    }
+    if (launchGallery) {
+        if (permissionsManager.isPermissionGranted(PermissionType.GALLERY)) {
+            galleryManager.launch()
+        } else {
+            permissionsManager.askPermission(PermissionType.GALLERY)
+        }
+        launchGallery = false
+    }
+    if (launchCamera) {
+        if (permissionsManager.isPermissionGranted(PermissionType.CAMERA)) {
+            cameraManager.launch()
+        } else {
+            permissionsManager.askPermission(PermissionType.CAMERA)
+        }
+        launchCamera = false
+    }
+    if (launchSetting) {
+        permissionsManager.launchSettings()
+        launchSetting = false
+    }
+    if (permissionRationalDialog) {
+        AlertMessageDialog(
+            title = "Permission Required",
+            message = "To set your profile picture, please grant this permission. You can manage permissions in your device settings.",
+            positiveButtonText = "Settings",
+            negativeButtonText = "Cancel",
+            onPositiveClick = {
+                permissionRationalDialog = false
+                launchSetting = true
+
+            },
+            onNegativeClick = {
+                permissionRationalDialog = false
+            })
+
+    }
+
+    Column(
+        modifier = modifier
+            .padding(top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+        ) {
+            LazyRow(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                items(imageBitmap) { bitmap ->
+                    bitmap?.let { it ->
+                        Image(
+                            bitmap = it,
+                            contentDescription = "Image",
+                            modifier = Modifier
+                                .size(100.dp).background(
+                                    color = Color.White,
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+
+                item {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .clickable {
+                                imageSourceOptionDialog = true
+                            }
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add Image",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    Color.LightGray,
+                                    shape = CircleShape
+                                )
+                                .padding(8.dp)
+                        )
+                        Text(
+                            text = "Upload Image"
+                        )
+                    }
+
+                }
+            }
+        }
+
+    }
+}
+
+
+@Composable
 fun SyncNowSection(
     modifier: Modifier = Modifier,
     lastSyncTime: String = "11:50",
@@ -481,7 +647,7 @@ fun SyncNowSection(
     val userActivityInteractionSource = remember { MutableInteractionSource() }
     val isHoveredOne by userActivityInteractionSource.collectIsHoveredAsState()
     Column(
-        modifier = modifier.fillMaxWidth(0.85f).padding(top = 16.dp),
+        modifier = modifier.padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
