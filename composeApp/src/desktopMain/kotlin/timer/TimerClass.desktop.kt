@@ -297,7 +297,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri =base64Converter()
+//            uri =base64Converter()
         )
         startTime = endTime
         globalEventListener.resetClickCount()
@@ -344,7 +344,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri = base64Converter()
+//            uri = base64Converter()
         )
         storeStartTime = endTime
         return activity
@@ -369,7 +369,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             billable = "",
             notes = "",
             unTrackedTime = idealTime.value.toLong(),
-            uri = null //no photo for untracked activity
+            //uri = null //no photo for untracked activity
         )
         startTime = Clock.System.now()
         globalEventListener.resetClickCount()

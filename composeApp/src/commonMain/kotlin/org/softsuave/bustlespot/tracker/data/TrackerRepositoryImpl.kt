@@ -37,10 +37,10 @@ import org.softsuave.bustlespot.data.network.models.response.GetAllTasks
 import org.softsuave.bustlespot.data.network.models.response.ModuleResponse
 import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
+import org.softsuave.bustlespot.tracker.data.TrackerRepositoryImpl.Companion.buildFormData
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
 import org.softsuave.bustlespot.tracker.data.model.ActivityDataResponse
 import org.softsuave.bustlespot.tracker.data.model.PostActivityRequest
-import org.softsuave.bustlespot.utils.bitmapToByteArray
 
 class TrackerRepositoryImpl(
     private val client: HttpClient,
@@ -213,10 +213,10 @@ class TrackerRepositoryImpl(
         return flow {
             try {
                 emit(Result.Loading)
-
+                val formData = buildFormData(activityData = postActivityRequest)
                 val response: HttpResponse = client.post("$BASEURL$POSTACTIVITY") {
                     contentType(ContentType.Application.Json)
-                    setBody(MultiPartFormDataContent(buildFormData(activityData = postActivityRequest)))
+                    setBody(MultiPartFormDataContent(formData))
                     bearerAuth(sessionManager.accessToken)
                 }
                 if (response.status == HttpStatusCode.Created) {

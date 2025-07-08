@@ -60,8 +60,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 
     actual fun resetTimer() {
         isTrackerRunning.value = false
-        //    globalEventListener.unregisterListeners()
-        idealTime.value = 0
         Log.d("idle time rested")
         trackerTime.value = 0
     }
@@ -69,60 +67,18 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual fun stopTimer() {
         Log.d("stopTimer")
         isTrackerRunning.value = false
-        idealStartTime = Clock.System.now()
-
-
-        //   globalEventListener.unregisterListeners()
     }
 
     actual fun resumeTracker() {
         Log.d("resumeTracker")
         isTrackerRunning.value = true
-        //  globalEventListener.registerListeners()
     }
-
-    private fun setRandomTimes(
-        randomTimes: MutableStateFlow<List<Int>>,
-        overallStart: Int,
-        overallEnd: Int,
-        numberOfIntervals: Int = 1
-    ) {
-        val totalDuration = overallEnd - overallStart
-        if (totalDuration % numberOfIntervals != 0) {
-            throw IllegalArgumentException("Interval length ($totalDuration) must be evenly divisible by $numberOfIntervals.")
-        }
-        val intervalSize = totalDuration / numberOfIntervals
-        randomTimes.value = List(numberOfIntervals) { i ->
-            val subIntervalStart = overallStart + i * intervalSize
-            val subIntervalEnd = overallStart + (i + 1) * intervalSize
-            Random.nextInt(from = subIntervalStart, until = subIntervalEnd)
-        }
-    }
-
     actual fun startTimer() {
         isTrackerRunning.value = true
         isIdealTimerRunning.value = true
-        //    globalEventListener.registerListeners()
-        setRandomTimes(
-            randomTime,
-            overallStart = 0,
-            overallEnd = screenshotLimit * 60,
-            numberOfIntervals = screenShotFrequency
-        )
-        trackerIndex = 0
-
         startTime = Clock.System.now()
         storeStartTime = Clock.System.now()
-        if (!isIdleTaskScheduled.getAndSet(true)) {
-            idleTimerTask = object : TimerTask() {
-                override fun run() {
-                    if (isIdealTimerRunning.value) {
-                        idealTime.value += 1
-                    }
-                }
-            }
-            timer.schedule(idleTimerTask, 1000, 1000)
-        }
+
         if (!isTaskScheduled.getAndSet(true)) {
             trackerTimerTask = object : TimerTask() {
                 override fun run() {
@@ -140,25 +96,9 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
                         Log.d("$timeDifference and ${canCallApi.value}")
                         trackerTime.value++
                         // need to add initial ideal time
-                        screenShotTakenTime.value++
+
                         println("Current minute: ${(trackerTime.value % 3600) / 60}")
                         println("Random times: ${randomTime.value}")
-                        if (trackerIndex < randomTime.value.size && trackerTime.value > randomTime.value[trackerIndex]) {
-                            takeScreenShot()
-                            screenShotTakenTime.value = 0
-                            trackerIndex++
-                            if (trackerIndex == randomTime.value.size) {
-                                val overallStart = trackerTime.value
-                                val overallEnd = overallStart + (screenshotLimit * 60)
-                                trackerIndex = 0
-                                setRandomTimes(
-                                    randomTime,
-                                    overallStart,
-                                    overallEnd,
-                                    screenShotFrequency
-                                )
-                            }
-                        }
                     }
                 }
             }
@@ -192,38 +132,17 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     }
 
     actual fun startScreenshotTask() {
-        if (screenshotRepeatingTask == null) {
-            screenshotRepeatingTask = object : TimerTask() {
-                override fun run() {
-                    if (!isPaused) {
-                        val randomDelay = Random.nextLong(0, 60 * 1000)
-                        screenshotOneShotTask?.cancel()
-                        screenshotOneShotTask = object : TimerTask() {
-                            override fun run() {
-                                takeScreenShot()
-                            }
-                        }
-                        timer.schedule(screenshotOneShotTask, randomDelay)
-                    }
-                }
-            }
-            timer.scheduleAtFixedRate(screenshotRepeatingTask, 0, 60 * 1000)
-        }
     }
 
     actual fun pauseScreenshotTask() {
-        isPaused = true
+
     }
 
     actual fun resumeScreenshotTask() {
-        isPaused = false
+
     }
 
     actual fun stopScreenshotTask() {
-        screenshotRepeatingTask?.cancel()
-        screenshotRepeatingTask = null
-        screenshotOneShotTask?.cancel()
-        screenshotOneShotTask = null
     }
 
     actual fun updateTrackerTimer() {
