@@ -27,17 +27,13 @@ actual class SharedImage(private val image: UIImage?) {
         }
 
     }
-
-    actual fun toImageBitmap(): ImageBitmap? {
-        val byteArray = toByteArray()
-        return if (byteArray != null) {
-            Image.makeFromEncoded(byteArray).toComposeImageBitmap()
-        } else {
-            null
-        }
-    }
-
     private companion object {
         const val COMPRESSION_QUALITY = 0.99
     }
+}
+
+actual fun toImageBitmap(
+    byteArray: ByteArray
+): ImageBitmap {
+    return Image.makeFromEncoded(byteArray).toComposeImageBitmap()
 }
