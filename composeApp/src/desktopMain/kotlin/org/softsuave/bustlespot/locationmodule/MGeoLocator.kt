@@ -33,17 +33,7 @@ class DLocater(
     }
 
     override suspend fun track(request: LocationRequest): Flow<Location> {
-        return flow {
-            emit(
-                Location(
-                    coordinates = Coordinates(0.0, 0.0),
-                    accuracy = 0.0, timestampMillis = System.currentTimeMillis(),
-                    azimuth = null,
-                    speed = null,
-                    altitude = null
-                )
-            )
-        }
+        return locationUpdates
     }
 
     override fun stopTracking() {
