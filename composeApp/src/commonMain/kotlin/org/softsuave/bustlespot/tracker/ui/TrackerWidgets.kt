@@ -50,6 +50,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -61,7 +62,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -90,6 +93,17 @@ import org.softsuave.bustlespot.shared.rememberGalleryManager
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
 import org.softsuave.bustlespot.utils.BustleSpotRed
 import org.softsuave.bustlespot.utils.moveToFirst
+
+
+@Composable
+fun screenPercentageToDp(percentage: Float): Dp {
+    val density = LocalDensity.current
+    val maxHeight by remember(density) {
+        derivedStateOf { with(density) { (600.dp.toPx() * 0.4f).toDp() } }
+    }
+    return maxHeight
+}
+
 
 @Composable
 fun <T> DropDownSelectionList(
@@ -323,7 +337,7 @@ fun TimerSessionSection(
                 )
             }
         }
-        if(platFormType== PlatFormType.DESKTOP) {
+        if (platFormType == PlatFormType.DESKTOP) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -460,6 +474,7 @@ fun MapSection(
     centerCoordinate: Coordinate,
     onMarkerClick: (Coordinate) -> Unit = {}
 ) {
+    val mapHeight = screenPercentageToDp(0.3f)
     Column(
         modifier = modifier.padding(top = 16.dp)
     ) {
@@ -476,6 +491,8 @@ fun MapSection(
             )
         }
         MapViewMobile(
+            modifier = Modifier.fillMaxWidth()
+                .height(mapHeight).clip(RoundedCornerShape(16.dp)),
             centerCoordinate = centerCoordinate,
             onMarkerClick = onMarkerClick
         )
@@ -484,10 +501,11 @@ fun MapSection(
 
 
 @Composable
-fun ImageUploadSection(modifier: Modifier = Modifier,
-                 imageBitmap : List<ImageBitmap?> = emptyList(),
-                 addImageBytes:(SharedImage?) -> Unit ={}
-                 ) {
+fun ImageUploadSection(
+    modifier: Modifier = Modifier,
+    imageBitmap: List<ImageBitmap?> = emptyList(),
+    addImageBytes: (SharedImage?) -> Unit = {}
+) {
     var imageSourceOptionDialog by remember { mutableStateOf(value = false) }
     var launchCamera by remember { mutableStateOf(value = false) }
     var launchGallery by remember { mutableStateOf(value = false) }
@@ -571,66 +589,69 @@ fun ImageUploadSection(modifier: Modifier = Modifier,
     }
 
     Column(
-        modifier = modifier
-            .padding(top = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
+        val interactionSource = remember { MutableInteractionSource() }
+        LazyRow(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (imageBitmap.isEmpty()) Arrangement.Center else Arrangement.spacedBy(
+                8.dp
+            ),
+            contentPadding = PaddingValues(horizontal = 16.dp), modifier = Modifier.fillMaxWidth()
         ) {
-            LazyRow(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                items(imageBitmap) { bitmap ->
-                    bitmap?.let { it ->
-                        Image(
-                            bitmap = it,
-                            contentDescription = "Image",
-                            modifier = Modifier
-                                .size(100.dp).background(
-                                    color = Color.White,
-                                    shape = RoundedCornerShape(8.dp)
-                                ),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
 
-                item {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+            items(imageBitmap) { bitmap ->
+                bitmap?.let {
+                    Image(
+                        bitmap = it,
+                        contentDescription = "Image",
                         modifier = Modifier
-                            .clickable {
-                                imageSourceOptionDialog = true
-                            }
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add Image",
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(
-                                    Color.LightGray,
-                                    shape = CircleShape
-                                )
-                                .padding(8.dp)
-                        )
-                        Text(
-                            text = "Upload Image"
-                        )
-                    }
-
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(16.dp)),
+                        contentScale = ContentScale.Crop
+                    )
                 }
             }
-        }
 
+            item {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.size(100.dp)
+                        .background(
+                            Color.LightGray,
+                            shape = RoundedCornerShape(16.dp)
+                        ).padding(8.dp).clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) {
+                            imageSourceOptionDialog = true
+                        }
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add Image",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                Color.DarkGray,
+                                shape = CircleShape
+                            )
+                            .padding(8.dp)
+                    )
+                    Text(
+                        text = "Upload Image",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+
+            }
+        }
     }
 }
 

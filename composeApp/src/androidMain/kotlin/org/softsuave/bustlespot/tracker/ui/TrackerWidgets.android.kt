@@ -36,7 +36,7 @@ actual fun MapViewMobile(
 
     // Always create the Android view
     AndroidView(
-        modifier = modifier.height(300.dp),
+        modifier = modifier,
         factory = {
             FragmentContainerView(it).apply {
                 id = containerId

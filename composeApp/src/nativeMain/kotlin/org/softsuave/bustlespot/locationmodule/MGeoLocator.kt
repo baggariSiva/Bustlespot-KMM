@@ -5,6 +5,6 @@ import dev.jordond.compass.geolocation.mobile.mobile
 
 actual class MGeoLocator {
     actual fun getLocator(): Locator? {
-        return Locator.mobile() // or Locator.mobile() if browser not supported
+        return Locator.mobile()
     }
 }

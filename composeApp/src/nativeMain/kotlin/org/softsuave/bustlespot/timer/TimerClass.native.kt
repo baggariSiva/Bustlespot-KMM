@@ -98,8 +98,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 
     actual fun startTimer() {
         isTrackerRunning.value = true
-        isIdealTimerRunning.value = true
-        //    globalEventListener.registerListeners()
         setRandomTimes(
             randomTime,
             overallStart = 0,
@@ -107,41 +105,9 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             numberOfIntervals = screenShotFrequency
         )
         trackerIndex = 0
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.keyCountFlow.collectLatest { count ->
-//                keyboradKeyEvents.emit(count)
-//                idealTime.value = 0
-//            }
-        }
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.mouseCountFlow.collectLatest { count ->
-//                mouseKeyEvents.emit(count)
-//                idealTime.value = 0
-//            }
-        }
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.mouseMotionCountFlow.collectLatest { count ->
-//                mouseMotionCount.emit(count)
-//                idealTime.value = 0
-//            }
-        }
+
         startTime = Clock.System.now()
         storeStartTime = Clock.System.now()
-            print("Clicked on tracker button")
-            // Idle timer coroutine (increments idealTime every second when active)
-            if (!isIdleTaskScheduled.value) {
-                isIdleTaskScheduled.value = true
-                idleJob = viewModelScope.launch {
-                    while (isActive) {
-                        delay(1000L) // wait 1 second
-                        if (isIdealTimerRunning.value) {
-                            idealTime.value += 1
-                        }
-                    }
-                }
-            }
-
-            // Tracker timer coroutine (runs every second, checks for screenshot timing, etc.)
             if (!isTaskScheduled.getAndSet(true)) {
                 trackerJob = viewModelScope.launch {
                     while (isActive) {
