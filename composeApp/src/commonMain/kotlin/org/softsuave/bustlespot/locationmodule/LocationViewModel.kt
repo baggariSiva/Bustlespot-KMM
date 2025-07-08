@@ -24,7 +24,7 @@ class LocationViewModel() : ViewModel() {
     private val _locationInfo = MutableStateFlow("Press the button to get location")
     val locationInfo: StateFlow<String> = _locationInfo
 
-    private val _coordinateInfo = MutableStateFlow(Coordinate(0.0,0.0))
+    private val _coordinateInfo = MutableStateFlow(Coordinate(17.00,17.00))
     val coordinateInfo: StateFlow<Coordinate> = _coordinateInfo
 
 
@@ -57,10 +57,12 @@ class LocationViewModel() : ViewModel() {
                             checkGeoFence(Geocode(location.latitude, location.longitude, ""))
                         }
                         _coordinateInfo.value = Coordinate(location.latitude, location.longitude)
+                        println("Location: ${location.latitude}, ${location.longitude}")
                         _locationInfo.value =
                             "Latitude: ${location.latitude} \nLongitude: ${location.longitude}"
                     }
                 }
+                println("Tracking status: $status")
             }
         }
     }

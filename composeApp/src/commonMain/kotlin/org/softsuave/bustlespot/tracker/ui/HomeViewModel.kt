@@ -94,29 +94,11 @@ class HomeViewModel(
             this.projectId = _selectedProject.value?.projectId
             if (_platFormType.value != PlatFormType.DESKTOP) {
                 this.uri = imageBytes.value
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
             }
         }
+        _imageBytes.value = mutableListOf<SharedImage?>()
         return activityDataOfModule
     }
 
