@@ -282,9 +282,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     }
 
     actual fun getActivityData(): ActivityData {
-//        base64Converter()
         val endTime = getEndTime()
-//        val endTime = globalEventListener.lastClickTime
         val intervalInSeconds =
             endTime.epochSeconds.seconds.inWholeSeconds - startTime.epochSeconds.seconds.inWholeSeconds
         println(intervalInSeconds)
@@ -297,7 +295,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-//            uri =base64Converter()
+            uri = listOf(convertToBytes()),
         )
         startTime = endTime
         globalEventListener.resetClickCount()
@@ -376,15 +374,21 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         return activity
     }
 
-    private fun base64Converter():String {
+    fun convertToBytes(): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        ImageIO.write(screenShot.value?.toAwtImage(), "png", byteArrayOutputStream)
+        return byteArrayOutputStream.toByteArray()
+    }
+
+    private fun base64Converter(): String {
 //        screenShot.value?.toString()?.let { Log.d("this is great $it") }
         return screenShot.value?.let {
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                ImageIO.write(it.toAwtImage(), "png", byteArrayOutputStream)
-                val bytes = byteArrayOutputStream.toByteArray()
-                Log.d("$bytes y")
-                Base64.getEncoder().encodeToString(bytes)
-            }.toString()
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            ImageIO.write(it.toAwtImage(), "png", byteArrayOutputStream)
+            val bytes = byteArrayOutputStream.toByteArray()
+            Log.d("$bytes y")
+            Base64.getEncoder().encodeToString(bytes)
+        }.toString()
     }
 
 

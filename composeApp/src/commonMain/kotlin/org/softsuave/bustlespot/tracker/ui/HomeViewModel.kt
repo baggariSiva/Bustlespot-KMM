@@ -94,6 +94,25 @@ class HomeViewModel(
             this.projectId = _selectedProject.value?.projectId
             if (_platFormType.value != PlatFormType.DESKTOP) {
                 this.uri = imageBytes.value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 this.latitude = coordinateInfo.value.latitude
                 this.longitude = coordinateInfo.value.longitude
             }
@@ -767,7 +786,7 @@ class HomeViewModel(
                 } else {
                     if (checkTaskAndProject()) {
                         startTrackerTimer()
-                        if(_platFormType.value!=PlatFormType.DESKTOP) {
+                        if (_platFormType.value != PlatFormType.DESKTOP) {
                             locationViewModel.getCurrentLocation()
                             locationViewModel.startTracking()
                         }
@@ -779,7 +798,7 @@ class HomeViewModel(
                 updateSelectedTaskTime(trackerTime.value, idealTime.value)
                 stopTrackerTimer()
                 stopIdleTimer()
-                if(_platFormType.value!=PlatFormType.DESKTOP) {
+                if (_platFormType.value != PlatFormType.DESKTOP) {
                     locationViewModel.stopTracking()
                 }
             }
@@ -788,7 +807,7 @@ class HomeViewModel(
 
             TimerEvents.ResumeTimer -> {
                 resumeTrackerTimer()
-                if(_platFormType.value!=PlatFormType.DESKTOP) {
+                if (_platFormType.value != PlatFormType.DESKTOP) {
                     locationViewModel.resume()
                 }
             }
