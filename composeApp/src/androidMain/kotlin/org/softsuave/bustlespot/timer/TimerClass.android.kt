@@ -67,9 +67,9 @@ actual class TrackerModule actual constructor(
     private val screenShotFrequency = 10
     private val screenshotLimit = 1
     private var idealStartTime: Instant = Instant.DISTANT_PAST
-    private val postActivityInterval: Int = 60 //in second
+    private val postActivityInterval: Int = 600 //in second
     private val storeActivityInterval: Int = 60 //in second
-
+    private val fetchLocationInterval: Int = 60 //in second
     actual fun resetTimer() {
         isTrackerRunning.value = false
         Log.d("idle time rested")
@@ -110,7 +110,7 @@ actual class TrackerModule actual constructor(
                             curTimeCount=0
                             locationRandomTime = Random.nextInt(0, postActivityInterval)
                         }
-                        if (curTimeCount % 6 == 0) {
+                        if (curTimeCount % fetchLocationInterval == 0) {
                             viewModelScope.launch {
                                 locationViewModel.getUserCurrentLocation { it ->
                                     liveLocationCoordinate.value = it
