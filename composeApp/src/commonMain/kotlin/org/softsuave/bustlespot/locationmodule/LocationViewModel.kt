@@ -7,11 +7,13 @@ import dev.jordond.compass.geolocation.Geolocator
 import dev.jordond.compass.geolocation.GeolocatorResult
 import dev.jordond.compass.geolocation.LocationRequest
 import dev.jordond.compass.geolocation.TrackingStatus
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.softsuave.bustlespot.Log
 import org.softsuave.bustlespot.tracker.ui.Coordinate
 
 class LocationViewModel() : ViewModel() {
@@ -24,7 +26,7 @@ class LocationViewModel() : ViewModel() {
     private val _locationInfo = MutableStateFlow("Press the button to get location")
     val locationInfo: StateFlow<String> = _locationInfo
 
-    private val _coordinateInfo = MutableStateFlow(Coordinate(0.0,0.0))
+    private val _coordinateInfo = MutableStateFlow(Coordinate(0.0, 0.0))
     val coordinateInfo: StateFlow<Coordinate> = _coordinateInfo
 
 
@@ -63,6 +65,26 @@ class LocationViewModel() : ViewModel() {
                 }
             }
         }
+    }
+
+   suspend fun getUserCurrentLocation(
+       resCallback:(Coordinate) -> Unit = {}
+   ){
+           val result = geolocator.current()
+           when (result) {
+               is GeolocatorResult.Error -> {
+                   Coordinate(0.0, 0.0)
+                   Log.d(result.message)
+               }
+               is GeolocatorResult.Success -> {
+                   val loc = result.data.coordinates
+                 val c =  Coordinate(loc.latitude, loc.longitude)
+                   resCallback(c)
+                   Log.d("$c location" )
+               }
+           }
+
+
     }
 
     fun getCurrentLocation() {
@@ -129,14 +151,15 @@ class LocationViewModel() : ViewModel() {
         geoFenceManager = GeoFenceManager(shape, thresholdMeters)
         _geoFenceRunning.value = true
     }
+
     private var showStatus = "IDLE"
     private fun checkGeoFence(current: Geocode) {
         viewModelScope.launch {
             val currentStatus = geoFenceManager.check(current)
-            if(currentStatus == GeoFenceEnums.ENTER){
+            if (currentStatus == GeoFenceEnums.ENTER) {
                 showStatus = currentStatus.toString()
             }
-            if (currentStatus == GeoFenceEnums.EXIT){
+            if (currentStatus == GeoFenceEnums.EXIT) {
                 showStatus = currentStatus.toString()
             }
             _geoFenceInfo.update { showStatus }
