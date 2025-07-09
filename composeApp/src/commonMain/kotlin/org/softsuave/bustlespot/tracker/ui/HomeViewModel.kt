@@ -45,7 +45,8 @@ class HomeViewModel(
         MutableStateFlow(getPlatform().platformType)
     val platFormType = _platFormType.asStateFlow()
 
-    private val trackerModule = TrackerModule(viewModelScope)
+    private val trackerModule = TrackerModule(viewModelScope,
+        LocationViewModel())
     val trackerTime: StateFlow<Int> = trackerModule.trackerTime
     val isTrackerRunning: StateFlow<Boolean> = trackerModule.isTrackerRunning
     val idealTime: StateFlow<Int> = trackerModule.idealTime
@@ -94,8 +95,9 @@ class HomeViewModel(
             this.projectId = _selectedProject.value?.projectId
             if (_platFormType.value != PlatFormType.DESKTOP) {
                 this.uri = imageBytes.value
-                this.latitude = coordinateInfo.value.latitude
-                this.longitude = coordinateInfo.value.longitude
+                val userCoordinate = trackerModule.getLocationData()
+                this.latitude = userCoordinate?.latitude
+                this.longitude = userCoordinate?.longitude
             }
         }
         _imageBytes.value = mutableListOf<SharedImage?>()
@@ -168,12 +170,7 @@ class HomeViewModel(
 
     fun stopIdleTimer() = trackerModule.stopIdleTimer()
 
-    val locationViewModel = LocationViewModel()
-
-    val locationInfo = locationViewModel.locationInfo
-    val geoFenceInfo = locationViewModel.geoFenceInfo
-    val coordinateInfo = locationViewModel.coordinateInfo
-
+    val liveLocationCoordinate = trackerModule.liveLocationCoordinate
 
     private val _mainTaskList =
         MutableStateFlow<List<TaskData>>(emptyList())
@@ -764,14 +761,9 @@ class HomeViewModel(
             TimerEvents.StartTimer -> {
                 if (trackerTime.value != 0 && isTrackerRunning.value) {
                     resumeTrackerTimer()
-                    locationViewModel.resume()
                 } else {
                     if (checkTaskAndProject()) {
                         startTrackerTimer()
-                        if (_platFormType.value != PlatFormType.DESKTOP) {
-                            locationViewModel.getCurrentLocation()
-                            locationViewModel.startTracking()
-                        }
                     }
                 }
             }
@@ -780,18 +772,12 @@ class HomeViewModel(
                 updateSelectedTaskTime(trackerTime.value, idealTime.value)
                 stopTrackerTimer()
                 stopIdleTimer()
-                if (_platFormType.value != PlatFormType.DESKTOP) {
-                    locationViewModel.stopTracking()
-                }
             }
 
             TimerEvents.UpdateTime -> TODO()
 
             TimerEvents.ResumeTimer -> {
                 resumeTrackerTimer()
-                if (_platFormType.value != PlatFormType.DESKTOP) {
-                    locationViewModel.resume()
-                }
             }
         }
     }

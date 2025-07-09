@@ -711,16 +711,6 @@ fun SyncNowSection(
     }
 }
 
-@Composable
-fun UploadImageSection(
-    modifier: Modifier = Modifier,
-    onClickUploadImage: () -> Unit = {},
-    imageBitmap: ImageBitmap? = null,
-    imageLoader: ImageLoader? = null
-) {
-
-}
-
 
 // composeApp/src/commonMain/kotlin/MapView.kt
 data class Coordinate(val latitude: Double, val longitude: Double)

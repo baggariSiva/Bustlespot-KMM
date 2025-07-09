@@ -8,10 +8,13 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
+import org.softsuave.bustlespot.tracker.ui.Coordinate
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -19,10 +22,15 @@ import java.util.Base64
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.Int
 import kotlin.random.Random
+import kotlin.random.nextInt
 import kotlin.time.Duration.Companion.seconds
 
-actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
+actual class TrackerModule actual constructor(
+    private val viewModelScope: CoroutineScope,
+    private val locationViewModel: LocationViewModel
+) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var isIdealTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -31,7 +39,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual var keyboradKeyEvents: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var mouseKeyEvents: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var mouseMotionCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    actual var customeTimeForIdleTime: MutableStateFlow<Int> = MutableStateFlow(480)
+    actual var customeTimeForIdleTime: MutableStateFlow<Int> = MutableStateFlow(40)
     actual var numberOfScreenshot: MutableStateFlow<Int> = MutableStateFlow(1)
     actual var isTrackerStarted: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -46,6 +54,10 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     private var screenshotOneShotTask: TimerTask? = null
     private var isObservingEvents: Boolean = false
 
+    private var curTimeCount: Int = 0
+    private var locationRandomTime: Int = 0
+    private var userCoordinate: Coordinate = Coordinate(0.0, 0.0)
+
     @Volatile
     private var isPaused = false
 
@@ -55,7 +67,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     private val screenShotFrequency = 10
     private val screenshotLimit = 1
     private var idealStartTime: Instant = Instant.DISTANT_PAST
-    private val postActivityInterval: Int = 600 //in second
+    private val postActivityInterval: Int = 60 //in second
     private val storeActivityInterval: Int = 60 //in second
 
     actual fun resetTimer() {
@@ -73,12 +85,18 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         Log.d("resumeTracker")
         isTrackerRunning.value = true
     }
+
     actual fun startTimer() {
         isTrackerRunning.value = true
         isIdealTimerRunning.value = true
         startTime = Clock.System.now()
         storeStartTime = Clock.System.now()
-
+        locationRandomTime = Random.nextInt(0, postActivityInterval)
+        viewModelScope.launch {
+            locationViewModel.getUserCurrentLocation { it ->
+                userCoordinate = it
+            }
+        }
         if (!isTaskScheduled.getAndSet(true)) {
             trackerTimerTask = object : TimerTask() {
                 override fun run() {
@@ -89,14 +107,30 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
                             currentTime.epochSeconds - storeStartTime.epochSeconds
                         if (timeDifference >= postActivityInterval) {
                             canCallApi.value = true
+                            curTimeCount=0
+                            locationRandomTime = Random.nextInt(0, postActivityInterval)
+                        }
+                        if (curTimeCount % 6 == 0) {
+                            viewModelScope.launch {
+                                locationViewModel.getUserCurrentLocation { it ->
+                                    liveLocationCoordinate.value = it
+                                }
+                            }
                         }
                         if (storeTimeDifference >= storeActivityInterval) {
                             canStoreApiCall.value = true
                         }
                         Log.d("$timeDifference and ${canCallApi.value}")
-                        trackerTime.value++
-                        // need to add initial ideal time
-
+                        trackerTime.value++ // need to add initial ideal time
+                        curTimeCount = curTimeCount.inc()
+                        if (curTimeCount == locationRandomTime) {
+                            viewModelScope.launch {
+                                locationViewModel.getUserCurrentLocation {
+                                    setLocationCoordinates(it)
+                                }
+                            }
+                            Log.d("location set by random $userCoordinate")
+                        }
                         println("Current minute: ${(trackerTime.value % 3600) / 60}")
                         println("Random times: ${randomTime.value}")
                     }
@@ -104,6 +138,10 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             }
             timer.schedule(trackerTimerTask, 1000, 1000)
         }
+    }
+
+    fun setLocationCoordinates(coordinate: Coordinate) {
+        userCoordinate = coordinate
     }
 
     actual fun resetIdleTimer() {
@@ -170,16 +208,12 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 
 
     actual fun getActivityData(): ActivityData {
+        val endTime = Clock.System.now()
         val activity = ActivityData(
             startTime = startTime.toString(),
-            endTime = Clock.System.now().toString(),
-            mouseActivity = mouseKeyEvents.value,
-            keyboardActivity = keyboradKeyEvents.value,
-            totalActivity = (mouseKeyEvents.value + keyboradKeyEvents.value) % 100,
-            billable = "",
-            notes = "",
+            endTime = endTime.toString(),
         )
-        startTime = Clock.System.now()
+        startTime = endTime
         canCallApi.value = false
         return activity
     }
@@ -238,5 +272,14 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 
     actual fun updateStartTime() {
     }
+
+
+    actual var liveLocationCoordinate: MutableStateFlow<Coordinate> =
+        MutableStateFlow(userCoordinate)
+
+    actual fun getLocationData(): Coordinate? {
+        return userCoordinate
+    }
+
 
 }

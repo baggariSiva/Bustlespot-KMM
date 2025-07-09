@@ -11,7 +11,9 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
+import org.softsuave.bustlespot.tracker.ui.Coordinate
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -24,7 +26,8 @@ import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
+actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope,
+    private val locationViewModel: LocationViewModel) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var isIdealTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -394,4 +397,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 
     actual var canCallApi: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var canStoreApiCall: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    actual var liveLocationCoordinate: MutableStateFlow<Coordinate> = MutableStateFlow(Coordinate(0.0,0.0))
+    actual fun getLocationData(): Coordinate? {return null}
 }
