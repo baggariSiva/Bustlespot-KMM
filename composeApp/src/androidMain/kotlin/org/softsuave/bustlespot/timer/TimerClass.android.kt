@@ -94,7 +94,7 @@ actual class TrackerModule actual constructor(
         locationRandomTime = Random.nextInt(0, postActivityInterval)
         viewModelScope.launch {
             locationViewModel.getUserCurrentLocation { it ->
-                userCoordinate = it
+                liveLocationCoordinate.value = it
             }
         }
         if (!isTaskScheduled.getAndSet(true)) {
@@ -107,7 +107,7 @@ actual class TrackerModule actual constructor(
                             currentTime.epochSeconds - storeStartTime.epochSeconds
                         if (timeDifference >= postActivityInterval) {
                             canCallApi.value = true
-                            curTimeCount=0
+                            curTimeCount = 0
                             locationRandomTime = Random.nextInt(0, postActivityInterval)
                         }
                         if (curTimeCount % fetchLocationInterval == 0) {
@@ -125,8 +125,8 @@ actual class TrackerModule actual constructor(
                         curTimeCount = curTimeCount.inc()
                         if (curTimeCount == locationRandomTime) {
                             viewModelScope.launch {
-                                locationViewModel.getUserCurrentLocation {
-                                    setLocationCoordinates(it)
+                                locationViewModel.getUserCurrentLocation {coordinate->
+                                    userCoordinate = coordinate
                                 }
                             }
                             Log.d("location set by random $userCoordinate")
@@ -140,9 +140,6 @@ actual class TrackerModule actual constructor(
         }
     }
 
-    fun setLocationCoordinates(coordinate: Coordinate) {
-        userCoordinate = coordinate
-    }
 
     actual fun resetIdleTimer() {
         idealTime.value = 0
