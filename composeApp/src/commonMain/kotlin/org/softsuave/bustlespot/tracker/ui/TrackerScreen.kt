@@ -50,6 +50,7 @@ import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.data.network.models.response.TaskData
 import org.softsuave.bustlespot.organisation.ui.BustleSpotAppBar
+import org.softsuave.bustlespot.tracker.di.trackerDiModule
 import org.softsuave.bustlespot.tracker.scheduleWork
 import org.softsuave.bustlespot.tracker.ui.model.DropDownSelectionData
 import org.softsuave.bustlespot.utils.BustleSpotRed
@@ -73,14 +74,13 @@ fun TrackerScreen(
     val screenShotState by homeViewModel.screenShotState.collectAsState()
     val screenShotTakenTime by homeViewModel.screenShotTakenTime.collectAsState()
     val customeTimeForIdleTime by homeViewModel.customeTimeForIdleTime.collectAsState()
-//        homeViewModel.setPlatFormType(platform.platformType)
-//    val isNetworkAvailable by homeViewModel.isNetworkAvailable.collectAsState(false)
-    // Collect the consolidated drop-down states from HomeViewModel.
     val moduleDropDownState by homeViewModel.moduleDropDownState.collectAsState()
     val projectDropDownState by homeViewModel.projectDropDownState.collectAsState()
     val taskDropDownState by homeViewModel.taskDropDownState.collectAsState()
 
     val trackerDialogState by homeViewModel.trackerDialogState.collectAsState()
+
+    val canCallApi by homeViewModel.canCallApi.collectAsState()
 
     // Still track the selected project and task if needed.
     val selectedProject by homeViewModel.selectedProject.collectAsState()
@@ -96,10 +96,7 @@ fun TrackerScreen(
     val totalIdleTime by homeViewModel.totalIdleTime.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val locationInfo by homeViewModel.locationInfo.collectAsState()
-    val geoFenceInfo by homeViewModel.geoFenceInfo.collectAsState()
-    val coordinateInfo by homeViewModel.coordinateInfo.collectAsState()
-    val isOnSiteSelected by homeViewModel.isOnSiteSelected.collectAsState()
+    val liveLocationCoordinate by homeViewModel.liveLocationCoordinate.collectAsState()
 
     val imageBitmap by homeViewModel.imageBitmap.collectAsState()
 
@@ -165,11 +162,10 @@ fun TrackerScreen(
             }
         )
     }
-    LaunchedEffect(homeViewModel.canCallApi.value) {
-        Log.d("isChanged ${homeViewModel.canCallApi.value}")
-        if (homeViewModel.canCallApi.value) {
-            homeViewModel.startPostingActivity(
-            )
+    LaunchedEffect(canCallApi) {
+        Log.d("isChanged $canCallApi")
+        if (canCallApi) {
+            homeViewModel.startPostingActivity()
         } else {
             Log.d("call restored")
         }
@@ -409,7 +405,7 @@ fun TrackerScreen(
                                 PlatFormType.IOS, PlatFormType.ANDROID -> {
                                     MapSection(
                                         modifier = Modifier,
-                                        centerCoordinate = coordinateInfo
+                                        centerCoordinate = liveLocationCoordinate
                                     )
                                     ImageUploadSection(
                                         modifier = Modifier,
