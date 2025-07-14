@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -99,7 +98,7 @@ import org.softsuave.bustlespot.utils.moveToFirst
 fun screenPercentageToDp(percentage: Float): Dp {
     val density = LocalDensity.current
     val maxHeight by remember(density) {
-        derivedStateOf { with(density) { (600.dp.toPx() * 0.4f).toDp() } }
+        derivedStateOf { with(density) { (600.dp.toPx() * percentage).toDp() } }
     }
     return maxHeight
 }
@@ -107,8 +106,7 @@ fun screenPercentageToDp(percentage: Float): Dp {
 
 @Composable
 fun <T> DropDownSelectionList(
-    modifier: Modifier = Modifier,
-    data: DropDownSelectionData<T>
+    modifier: Modifier = Modifier, data: DropDownSelectionData<T>
 ) {
     var isMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val mutableInteractionSource = remember { MutableInteractionSource() }
@@ -135,10 +133,7 @@ fun <T> DropDownSelectionList(
 
     // Optimize filtered list computation
     val filteredList by remember(
-        data.inputText,
-        data.dropDownList,
-        data.isSelected,
-        data.selectedItem
+        data.inputText, data.dropDownList, data.isSelected, data.selectedItem
     ) {
         derivedStateOf {
             if (!data.isSelected) {
@@ -151,8 +146,7 @@ fun <T> DropDownSelectionList(
         }
     }
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally
     ) {
         TextField(
             value = data.inputText,
@@ -170,14 +164,12 @@ fun <T> DropDownSelectionList(
                         isMenuExpanded = !(isMenuExpanded && data.isEnabled)
 //                        isMenuExpanded = if (data.isEnabled) !isMenuExpanded else false
                         println("icon clicked")
-                    },
-                    modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
+                    }, modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
                 ) {
                     Icon(
                         painter = painterResource(
                             if (isMenuExpanded && data.isEnabled) Res.drawable.ic_drop_up else Res.drawable.ic_drop_down
-                        ),
-                        contentDescription = "Toggle Dropdown"
+                        ), contentDescription = "Toggle Dropdown"
                     )
                 }
             },
@@ -203,9 +195,7 @@ fun <T> DropDownSelectionList(
                 data.onDismissClick()
                 println("dismiss called")
             },
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .heightIn(max = maxHeight),
+            modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = maxHeight),
             properties = PopupProperties(focusable = false),
             containerColor = Color.White
         ) {
@@ -217,32 +207,25 @@ fun <T> DropDownSelectionList(
                             isMenuExpanded = false
                             data.onItemClick(item)
                         },
-                        modifier = Modifier
-                            .background(
+                        modifier = Modifier.background(
                                 if (data.isSelectedItem(
-                                        item!!,
-                                        data.selectedItem
+                                        item!!, data.selectedItem
                                     )
                                 ) BustleSpotRed.copy(alpha = 0.2f)
                                 else Color.White
-                            )
-                            .pointerHoverIcon(PointerIcon.Hand)
+                            ).pointerHoverIcon(PointerIcon.Hand)
                     )
                 }
             } else {
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            "No Options",
-                            modifier = Modifier.fillMaxWidth(),
-                            color = Color.Gray
-                        )
-                    },
-                    onClick = {
-                        isMenuExpanded = false
-                        data.onNoOptionClick()
-                    },
-                    modifier = Modifier.background(Color.White)
+                    Text(
+                        "No Options", modifier = Modifier.fillMaxWidth(), color = Color.Gray
+                    )
+                }, onClick = {
+                    isMenuExpanded = false
+                    data.onNoOptionClick()
+                }, modifier = Modifier.background(Color.White)
                 )
             }
         }
@@ -262,12 +245,10 @@ fun TimerSessionSection(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "Current Session",
@@ -277,8 +258,7 @@ fun TimerSessionSection(
             )
         }
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = taskName,
@@ -312,8 +292,7 @@ fun TimerSessionSection(
                         imageVector = Icons.Rounded.PlayArrow,
                         contentDescription = "Play",
                         tint = BustleSpotRed,
-                        modifier = Modifier
-                            .size(32.dp).pointerHoverIcon(PointerIcon.Hand)
+                        modifier = Modifier.size(32.dp).pointerHoverIcon(PointerIcon.Hand)
                             .clickable(
                                 role = Role.Button,
                                 interactionSource = interactionSource,
@@ -327,8 +306,7 @@ fun TimerSessionSection(
                                     homeViewModel.handleTrackerTimerEvents(TimerEvents.StartTimer)
                                 }
 //                                }
-                            }
-                    )
+                            })
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
@@ -339,9 +317,7 @@ fun TimerSessionSection(
         }
         if (platFormType == PlatFormType.DESKTOP) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -364,60 +340,39 @@ fun TimerSessionSection(
 private fun StopButton(onClick: () -> Unit) {
     val interactionSource = remember { MutableInteractionSource() }
     Box(
-        modifier = Modifier
-            .size(32.dp)
-            .clickable(
-                role = Role.Button,
-                interactionSource = interactionSource,
-                indication = null
-            ) { onClick() }
-            .background(BustleSpotRed, CircleShape).pointerHoverIcon(PointerIcon.Hand)
+        modifier = Modifier.size(32.dp).clickable(
+            role = Role.Button, interactionSource = interactionSource, indication = null
+        ) { onClick() }.background(BustleSpotRed, CircleShape).pointerHoverIcon(PointerIcon.Hand)
 
     ) {
         val infiniteTransition = rememberInfiniteTransition(label = "")
         val scale by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 4f,
-            animationSpec = infiniteRepeatable(
+            initialValue = 0f, targetValue = 4f, animationSpec = infiniteRepeatable(
                 animation = keyframes {
                     durationMillis = 2500
                     0f at 0
                     4f at 2500
-                },
-                repeatMode = RepeatMode.Restart
-            ),
-            label = ""
+                }, repeatMode = RepeatMode.Restart
+            ), label = ""
         )
         val alpha by infiniteTransition.animateFloat(
-            initialValue = 1f,
-            targetValue = 0f,
-            animationSpec = infiniteRepeatable(
+            initialValue = 1f, targetValue = 0f, animationSpec = infiniteRepeatable(
                 animation = keyframes {
                     durationMillis = 2500
                     1f at 0
                     0f at 2500
-                },
-                repeatMode = RepeatMode.Restart
-            ),
-            label = ""
+                }, repeatMode = RepeatMode.Restart
+            ), label = ""
         )
 
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(16.dp)
-                .graphicsLayer {
-                    this.scaleX = scale
-                    this.scaleY = scale
-                    this.alpha = alpha
-                }
-                .background(BustleSpotRed, CircleShape)
-        )
+        Box(modifier = Modifier.align(Alignment.Center).size(16.dp).graphicsLayer {
+                this.scaleX = scale
+                this.scaleY = scale
+                this.alpha = alpha
+            }.background(BustleSpotRed, CircleShape))
 
         Box(
-            modifier = Modifier
-                .size(10.dp)
-                .align(Alignment.Center)
+            modifier = Modifier.size(10.dp).align(Alignment.Center)
                 .background(Color.White, RoundedCornerShape(2.dp))
         )
     }
@@ -453,9 +408,7 @@ fun ScreenShotSection(
         imageBitmap?.let { bitmap ->
             Image(
                 modifier = Modifier.padding(top = 8.dp).align(Alignment.CenterHorizontally)
-                    .aspectRatio(1.8f),
-                bitmap = bitmap,
-                contentDescription = "Screenshot"
+                    .aspectRatio(1.8f), bitmap = bitmap, contentDescription = "Screenshot"
             )
         } ?: AsyncImage(
             model = lastTakenImage,
@@ -474,7 +427,7 @@ fun MapSection(
     centerCoordinate: Coordinate,
     onMarkerClick: (Coordinate) -> Unit = {}
 ) {
-    val mapHeight = screenPercentageToDp(0.3f)
+    val mapHeight = screenPercentageToDp(0.4f)
     Column(
         modifier = modifier.padding(top = 16.dp)
     ) {
@@ -491,8 +444,7 @@ fun MapSection(
             )
         }
         MapViewMobile(
-            modifier = Modifier.fillMaxWidth()
-                .height(mapHeight).clip(RoundedCornerShape(16.dp)),
+            modifier = Modifier.fillMaxWidth().height(mapHeight).clip(RoundedCornerShape(16.dp)),
             centerCoordinate = centerCoordinate,
             onMarkerClick = onMarkerClick
         )
@@ -513,8 +465,7 @@ fun ImageUploadSection(
     var permissionRationalDialog by remember { mutableStateOf(value = false) }
     val permissionsManager = createPermissionsManager(object : PermissionCallback {
         override fun onPermissionStatus(
-            permissionType: PermissionType,
-            status: PermissionStatus
+            permissionType: PermissionType, status: PermissionStatus
         ) {
             when (status) {
                 PermissionStatus.GRANTED -> {
@@ -599,7 +550,8 @@ fun ImageUploadSection(
             horizontalArrangement = if (imageBitmap.isEmpty()) Arrangement.Center else Arrangement.spacedBy(
                 8.dp
             ),
-            contentPadding = PaddingValues(horizontal = 16.dp), modifier = Modifier.fillMaxWidth()
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
 
             items(imageBitmap) { bitmap ->
@@ -607,9 +559,7 @@ fun ImageUploadSection(
                     Image(
                         bitmap = it,
                         contentDescription = "Image",
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(16.dp)),
+                        modifier = Modifier.size(100.dp).clip(RoundedCornerShape(16.dp)),
                         contentScale = ContentScale.Crop
                     )
                 }
@@ -619,28 +569,20 @@ fun ImageUploadSection(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.size(100.dp)
-                        .background(
-                            Color.LightGray,
-                            shape = RoundedCornerShape(16.dp)
+                    modifier = Modifier.size(100.dp).background(
+                            Color.LightGray, shape = RoundedCornerShape(16.dp)
                         ).padding(8.dp).clickable(
-                            interactionSource = interactionSource,
-                            indication = null
+                            interactionSource = interactionSource, indication = null
                         ) {
                             imageSourceOptionDialog = true
-                        }
-                ) {
+                        }) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add Image",
                         tint = Color.White,
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(
-                                Color.DarkGray,
-                                shape = CircleShape
-                            )
-                            .padding(8.dp)
+                        modifier = Modifier.size(40.dp).background(
+                                Color.DarkGray, shape = CircleShape
+                            ).padding(8.dp)
                     )
                     Text(
                         text = "Upload Image",
