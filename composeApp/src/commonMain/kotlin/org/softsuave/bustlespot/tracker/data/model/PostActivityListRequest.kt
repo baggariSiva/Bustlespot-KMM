@@ -25,6 +25,8 @@ data class ActivityData(
     @SerialName("organisationId") var orgId: Int? = 0,
     @SerialName("activity_screenshot") var uri: List<ByteArray?> = emptyList<ByteArray>(),
     @SerialName("idle_time") var unTrackedTime: Long? = null,
+
+    var clickedKeys: String? = null,
     var longitude: Double?= null,
-    var latitude: Double?= null
+    var latitude: Double?= null,
 )

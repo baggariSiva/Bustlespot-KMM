@@ -1,3 +1,4 @@
+import androidx.compose.runtime.mutableStateOf
 import com.github.kwhat.jnativehook.GlobalScreen
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener
@@ -14,9 +15,10 @@ class GlobalEventListener : NativeKeyListener, NativeMouseListener, NativeMouseM
     private var mouseMotionCount = 0
 
     val fKeyCount = MutableStateFlow(0)
+    var cliked_keys = mutableStateOf("")
     val fMouseCount = MutableStateFlow(0)
     val fMouseMotionCount = MutableStateFlow(0)
-    var lastClickTime : Instant = Instant.DISTANT_PAST
+    var lastClickTime: Instant = Instant.DISTANT_PAST
 
     private fun registerEventTracking() {
         try {
@@ -26,11 +28,14 @@ class GlobalEventListener : NativeKeyListener, NativeMouseListener, NativeMouseM
             return
         }
     }
-    fun resetClickCount(){
+
+    fun resetClickCount() {
         keyCount = 0
         mouseCount = 0
         mouseMotionCount = 0
+        cliked_keys = mutableStateOf("")
     }
+
     fun registerListeners() {
         if (!GlobalScreen.isNativeHookRegistered()) {
             registerEventTracking()
@@ -68,6 +73,7 @@ class GlobalEventListener : NativeKeyListener, NativeMouseListener, NativeMouseM
     override fun nativeKeyPressed(e: NativeKeyEvent) {
         keyCount++
         fKeyCount.value = keyCount
+        cliked_keys.value += NativeKeyEvent.getKeyText(e.keyCode)
         lastClickTime = Clock.System.now()
         //println("Key pressed: ${NativeKeyEvent.getKeyText(e.keyCode)} | Total: $keyCount")
     }

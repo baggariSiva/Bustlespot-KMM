@@ -63,6 +63,7 @@ class TrackerRepositoryImpl(
         const val ACTIVITY_SCREENSHOT = "activity_screenshot"
         const val LATITUDE = "latitude"
         const val LONGITUDE = "longitude"
+        const val CLICKED_KEYS = "clicked_keys"
 
 
         fun buildFormData(activityData: ActivityData) = formData {
@@ -101,6 +102,9 @@ class TrackerRepositoryImpl(
             }
             activityData.longitude?.let {
                 append(LONGITUDE, it.toString())
+            }
+            activityData.clickedKeys?.let {
+                append(CLICKED_KEYS, it)
             }
 
             activityData.lastScreenShotTime?.let {

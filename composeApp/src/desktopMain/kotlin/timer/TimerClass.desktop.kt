@@ -26,8 +26,10 @@ import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope,
-    private val locationViewModel: LocationViewModel) {
+actual class TrackerModule actual constructor(
+    private val viewModelScope: CoroutineScope,
+    private val locationViewModel: LocationViewModel
+) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var isIdealTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -299,6 +301,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             billable = "",
             notes = "",
             uri = listOf(convertToBytes()),
+            clickedKeys = globalEventListener.cliked_keys.value.ifEmpty { null },
         )
         startTime = endTime
         globalEventListener.resetClickCount()
@@ -398,6 +401,10 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual var canCallApi: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var canStoreApiCall: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    actual var liveLocationCoordinate: MutableStateFlow<Coordinate> = MutableStateFlow(Coordinate(0.0,0.0))
-    actual fun getLocationData(): Coordinate? {return null}
+    actual var liveLocationCoordinate: MutableStateFlow<Coordinate> =
+        MutableStateFlow(Coordinate(0.0, 0.0))
+
+    actual fun getLocationData(): Coordinate? {
+        return null
+    }
 }
