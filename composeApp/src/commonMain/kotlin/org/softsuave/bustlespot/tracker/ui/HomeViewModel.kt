@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -21,6 +23,8 @@ import org.softsuave.bustlespot.SessionManager
 import org.softsuave.bustlespot.auth.utils.Result
 import org.softsuave.bustlespot.auth.utils.UiEvent
 import org.softsuave.bustlespot.auth.utils.timeStringToSeconds
+import org.softsuave.bustlespot.background.PostingActivityService
+import org.softsuave.bustlespot.background.PostingServiceManager
 import org.softsuave.bustlespot.data.network.models.request.UpdateActivityRequest
 import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
@@ -33,20 +37,24 @@ import org.softsuave.bustlespot.shared.toImageBitmap
 import org.softsuave.bustlespot.timer.TrackerModule
 import org.softsuave.bustlespot.tracker.data.TrackerRepository
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
+import org.softsuave.bustlespot.utils.ActivityServiceState
 import kotlin.math.roundToInt
 
 class HomeViewModel(
     private val sessionManager: SessionManager,
     private val trackerRepository: TrackerRepository,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val postingServiceManager: PostingServiceManager
 ) : ViewModel() {
 
     private var _platFormType: MutableStateFlow<PlatFormType> =
         MutableStateFlow(getPlatform().platformType)
     val platFormType = _platFormType.asStateFlow()
 
-    private val trackerModule = TrackerModule(viewModelScope,
-        LocationViewModel())
+    private val trackerModule = TrackerModule(
+        viewModelScope,
+        LocationViewModel()
+    )
     val trackerTime: StateFlow<Int> = trackerModule.trackerTime
     val isTrackerRunning: StateFlow<Boolean> = trackerModule.isTrackerRunning
     val idealTime: StateFlow<Int> = trackerModule.idealTime
@@ -80,6 +88,37 @@ class HomeViewModel(
     fun addImageBytes(image: SharedImage?) {
         image?.let {
             _imageBytes.value = _imageBytes.value.toMutableList().apply { add(it) }
+        }
+    }
+
+    suspend fun startNotificationUpdated() {
+        postingServiceManager.currentState?.collectLatest {
+            when (it) {
+                ActivityServiceState.STARTED -> {
+                    handleTrackerTimerEvents(
+                        TimerEvents.StartTimer
+                    )
+                }
+
+                ActivityServiceState.STOPPED -> {
+                    handleTrackerTimerEvents(
+                        TimerEvents.StopTimer
+                    )
+                }
+
+                ActivityServiceState.PAUSED -> {
+                    handleTrackerTimerEvents(
+                        TimerEvents.PauseTimer
+                    )
+                }
+
+                ActivityServiceState.RESUMED -> {
+                    handleTrackerTimerEvents(
+                        TimerEvents.StartTimer
+                    )
+                }
+
+            }
         }
     }
 
@@ -227,7 +266,7 @@ class HomeViewModel(
         when (platformType) {
             PlatFormType.IOS, PlatFormType.ANDROID -> {
                 val selected = _moduleDropDownState.value.dropDownList.firstOrNull {
-                    it.moduleName.contains("onsite", ignoreCase = true)
+                    it.moduleName.contains("it", ignoreCase = true)
                 }
                 _selectedModule.value = selected
                 setModuleAndGetProTas(
@@ -756,14 +795,44 @@ class HomeViewModel(
     fun handleTrackerTimerEvents(timerEvents: TimerEvents) {
         when (timerEvents) {
             TimerEvents.FetchTime -> TODO()
-            TimerEvents.PauseTimer -> TODO()
+            TimerEvents.PauseTimer -> {
+                if (trackerTime.value != 0 && isTrackerRunning.value) {
+                    stopTrackerTimer()
+                    postingServiceManager.pausePosting()
+                } else {
+                    _trackerDialogState.value = _trackerDialogState.value.copy(
+                        isDialogShown = true,
+                        title = "Alert",
+                        text = "You are not started a tracker yet",
+                        confirmButtonText = "Ok",
+                        showDismissButton = false,
+                        onConfirm = {
+                            _trackerDialogState.value = _trackerDialogState.value.copy(
+                                isDialogShown = false
+                            )
+                        }
+                    )
+                }
+            }
+
             TimerEvents.ResetTimer -> TODO()
             TimerEvents.StartTimer -> {
                 if (trackerTime.value != 0 && isTrackerRunning.value) {
                     resumeTrackerTimer()
+                    postingServiceManager.resumePosting()
                 } else {
                     if (checkTaskAndProject()) {
                         startTrackerTimer()
+                        postingServiceManager.startPosting(
+                            "${_selectedTask.value?.taskId} - ${_selectedProject.value?.projectId} - ${trackerTime.value} - ${idealTime.value}",
+                            trackerTime.value * 1000L,
+                        ){
+                            viewModelScope.launch {
+                                delay(10000)
+                                startNotificationUpdated()
+                            }
+                        }
+
                     }
                 }
             }
@@ -772,12 +841,14 @@ class HomeViewModel(
                 updateSelectedTaskTime(trackerTime.value, idealTime.value)
                 stopTrackerTimer()
                 stopIdleTimer()
+                postingServiceManager.stopPosting()
             }
 
             TimerEvents.UpdateTime -> TODO()
 
             TimerEvents.ResumeTimer -> {
                 resumeTrackerTimer()
+                postingServiceManager.resumePosting()
             }
         }
     }
