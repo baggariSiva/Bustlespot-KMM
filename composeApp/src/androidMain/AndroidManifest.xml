@@ -20,7 +20,9 @@
     <uses-permission android:name="android.permission.MEDIA_PROJECTION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <application
         android:name=".BustlespotApplication"
         android:allowBackup="true"
@@ -57,6 +59,12 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/path_provider" />
         </provider>
+
+        <service
+            android:name=".background.PostingActivityService"
+            android:foregroundServiceType="dataSync|location"
+            android:exported="false">
+        </service>
     </application>
 
 </manifest>
