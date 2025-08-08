@@ -10,6 +10,6 @@ val trackerDiModule = module{
         TrackerRepositoryImpl(get(),get(),get())
     }
     factory {
-        HomeViewModel(get(),get(),get())
+        HomeViewModel(get(),get(),get(),get())
     }
 }
