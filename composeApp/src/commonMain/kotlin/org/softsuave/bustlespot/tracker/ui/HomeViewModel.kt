@@ -823,19 +823,29 @@ class HomeViewModel(
                 } else {
                     if (checkTaskAndProject()) {
                         startTrackerTimer()
+
+                        val selectedTaskId = _selectedTask.value?.taskId
+                        val selectedProjectId = _selectedProject.value?.projectId
+
+                        // Build a descriptive postData if you still want it
+                        val postData =
+                            "$selectedTaskId - $selectedProjectId - ${trackerTime.value} - ${idealTime.value}"
+
                         postingServiceManager.startPosting(
-                            "${_selectedTask.value?.taskId} - ${_selectedProject.value?.projectId} - ${trackerTime.value} - ${idealTime.value}",
-                            trackerTime.value * 1000L,
-                        ){
+                            postData = postData,
+                            taskId = selectedTaskId,
+                            projectId = selectedProjectId,
+                            initialTimeMillis = trackerTime.value * 1000L
+                        ) {
                             viewModelScope.launch {
                                 delay(10000)
                                 startNotificationUpdated()
                             }
                         }
-
                     }
                 }
             }
+
 
             TimerEvents.StopTimer -> {
                 updateSelectedTaskTime(trackerTime.value, idealTime.value)
