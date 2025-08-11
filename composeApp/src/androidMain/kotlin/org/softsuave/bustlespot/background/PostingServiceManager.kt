@@ -1,18 +1,19 @@
 package org.softsuave.bustlespot.background
 
-
 import android.content.Context
 import kotlinx.coroutines.flow.StateFlow
 import org.softsuave.bustlespot.utils.ActivityServiceState
 
 actual class PostingServiceManager(private val context: Context) {
 
-
     actual fun startPosting(
-        postData: String, initialTimeMillis: Long,
-        onStart: () -> Unit
+        postData: String,
+        initialTimeMillis: Long,
+        taskId: String?,
+        projectId: String?,
+        onStart: () -> Unit,
     ) {
-        PostingActivityService.startService(context, postData, initialTimeMillis,onStart)
+        PostingActivityService.startService(context, postData, taskId, projectId,initialTimeMillis, onStart)
     }
 
     actual fun stopPosting() {

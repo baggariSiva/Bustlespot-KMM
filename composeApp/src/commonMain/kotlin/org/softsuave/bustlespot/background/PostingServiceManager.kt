@@ -13,7 +13,9 @@ expect class PostingServiceManager {
     fun startPosting(
         postData: String,
         initialTimeMillis: Long = 0L,
-        onStart : () -> Unit = {},
+        taskId: String? = null,
+        projectId: String? = null,
+        onStart: () -> Unit = {},
     )
 
     fun stopPosting()
