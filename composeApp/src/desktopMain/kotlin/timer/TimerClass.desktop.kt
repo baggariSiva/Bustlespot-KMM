@@ -381,9 +381,18 @@ actual class TrackerModule actual constructor(
     }
 
     fun convertToBytes(): ByteArray {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        ImageIO.write(screenShot.value?.toAwtImage(), "png", byteArrayOutputStream)
-        return byteArrayOutputStream.toByteArray()
+        if (screenShot.value == null) {
+            Log.d("ScreenShot is null")
+            return ByteArray(0)
+        }
+        try {
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            ImageIO.write(screenShot.value!!.toAwtImage(), "png", byteArrayOutputStream)
+            return byteArrayOutputStream.toByteArray()
+        } catch (e: Exception) {
+            Log.d("Error converting screenshot to bytes: ${e.message}")
+            return ByteArray(0)
+        }
     }
 
     private fun base64Converter(): String {
