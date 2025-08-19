@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.buildConfig)
     id("com.google.gms.google-services") version "4.4.0" apply false
     id("app.cash.sqldelight") version "2.0.2"
+    alias(libs.plugins.composeHotReload)
 }
 
 kotlin {

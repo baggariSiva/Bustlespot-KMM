@@ -72,6 +72,9 @@ adaptiveAndroid = "1.0.0"
 workRuntimeKtx = "2.10.0"
 compass = "1.2.2"
 accompanist-permissions = "0.32.0"
+composeHotReload = "1.0.0-beta05"
+
+
 [libraries]
 
 android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "androidDriver" }
@@ -139,6 +142,7 @@ compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
+composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload"}
 
 
 [bundles]
