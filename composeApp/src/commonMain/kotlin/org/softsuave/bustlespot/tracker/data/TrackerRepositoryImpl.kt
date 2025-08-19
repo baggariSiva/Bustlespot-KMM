@@ -196,6 +196,7 @@ class TrackerRepositoryImpl(
                     bearerAuth(sessionManager.accessToken)
                 }
                 if (response.status == HttpStatusCode.OK) {
+                    println("Update Activity Response: ${response.status}")
                     val result: BaseResponse<GetAllTasks> = response.body()
                     println(result)
                     emit(Result.Success(result.data ?: GetAllTasks(emptyList())))

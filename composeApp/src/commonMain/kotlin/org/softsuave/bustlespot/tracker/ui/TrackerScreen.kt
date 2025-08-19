@@ -120,7 +120,7 @@ fun TrackerScreen(
             homeViewModel.stopTrackerTimer()
             homeViewModel.updateSelectedTaskTime(trackerTimer, idleTime)
             homeViewModel.updateTrackerTimer()
-//            homeViewModel.postUpdateActivity()
+            homeViewModel.postUpdateActivity()
         }
     }
 

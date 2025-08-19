@@ -143,12 +143,9 @@ class HomeViewModel(
         }
     }
 
-    fun postUpdateActivity(
-        organisationId: Int
-    ) {
+    fun postUpdateActivity() {
         try {
             val request = UpdateActivityRequest(
-                organisationId,
                 trackerModule.getIdleTime()
             )
             Log.d("$request----reguest")
