@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -166,11 +167,18 @@ fun <T> DropDownSelectionList(
                         println("icon clicked")
                     }, modifier = Modifier.pointerHoverIcon(PointerIcon.Hand)
                 ) {
-                    Icon(
-                        painter = painterResource(
-                            if (isMenuExpanded && data.isEnabled) Res.drawable.ic_drop_up else Res.drawable.ic_drop_down
-                        ), contentDescription = "Toggle Dropdown"
-                    )
+                    if (data.inputText == "" && filteredList.isEmpty() && data.error == "") {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = BustleSpotRed
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(
+                                if (isMenuExpanded && data.isEnabled) Res.drawable.ic_drop_up else Res.drawable.ic_drop_down
+                            ), contentDescription = "Toggle Dropdown"
+                        )
+                    }
                 }
             },
             label = { Text(data.title, color = BustleSpotRed, modifier = Modifier.fillMaxWidth()) },
@@ -208,24 +216,24 @@ fun <T> DropDownSelectionList(
                             data.onItemClick(item)
                         },
                         modifier = Modifier.background(
-                                if (data.isSelectedItem(
-                                        item!!, data.selectedItem
-                                    )
-                                ) BustleSpotRed.copy(alpha = 0.2f)
-                                else Color.White
-                            ).pointerHoverIcon(PointerIcon.Hand)
+                            if (data.isSelectedItem(
+                                    item!!, data.selectedItem
+                                )
+                            ) BustleSpotRed.copy(alpha = 0.2f)
+                            else Color.White
+                        ).pointerHoverIcon(PointerIcon.Hand)
                     )
                 }
             } else {
                 DropdownMenuItem(
                     text = {
-                    Text(
-                        "No Options", modifier = Modifier.fillMaxWidth(), color = Color.Gray
-                    )
-                }, onClick = {
-                    isMenuExpanded = false
-                    data.onNoOptionClick()
-                }, modifier = Modifier.background(Color.White)
+                        Text(
+                            "No Options", modifier = Modifier.fillMaxWidth(), color = Color.Gray
+                        )
+                    }, onClick = {
+                        isMenuExpanded = false
+                        data.onNoOptionClick()
+                    }, modifier = Modifier.background(Color.White)
                 )
             }
         }
@@ -366,10 +374,10 @@ private fun StopButton(onClick: () -> Unit) {
         )
 
         Box(modifier = Modifier.align(Alignment.Center).size(16.dp).graphicsLayer {
-                this.scaleX = scale
-                this.scaleY = scale
-                this.alpha = alpha
-            }.background(BustleSpotRed, CircleShape))
+            this.scaleX = scale
+            this.scaleY = scale
+            this.alpha = alpha
+        }.background(BustleSpotRed, CircleShape))
 
         Box(
             modifier = Modifier.size(10.dp).align(Alignment.Center)
@@ -570,19 +578,19 @@ fun ImageUploadSection(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier.size(100.dp).background(
-                            Color.LightGray, shape = RoundedCornerShape(16.dp)
-                        ).padding(8.dp).clickable(
-                            interactionSource = interactionSource, indication = null
-                        ) {
-                            imageSourceOptionDialog = true
-                        }) {
+                        Color.LightGray, shape = RoundedCornerShape(16.dp)
+                    ).padding(8.dp).clickable(
+                        interactionSource = interactionSource, indication = null
+                    ) {
+                        imageSourceOptionDialog = true
+                    }) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add Image",
                         tint = Color.White,
                         modifier = Modifier.size(40.dp).background(
-                                Color.DarkGray, shape = CircleShape
-                            ).padding(8.dp)
+                            Color.DarkGray, shape = CircleShape
+                        ).padding(8.dp)
                     )
                     Text(
                         text = "Upload Image",
