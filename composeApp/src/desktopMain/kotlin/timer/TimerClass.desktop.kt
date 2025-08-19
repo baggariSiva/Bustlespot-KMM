@@ -11,8 +11,9 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
-import org.softsuave.bustlespot.notifications.sendLocalNotification
+import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
+import org.softsuave.bustlespot.tracker.ui.Coordinate
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -25,7 +26,10 @@ import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
+actual class TrackerModule actual constructor(
+    private val viewModelScope: CoroutineScope,
+    private val locationViewModel: LocationViewModel
+) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var isIdealTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -56,7 +60,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     private var trackerTimerTask: TimerTask? = null
     private var idleTimerTask: TimerTask? = null
     private var trackerIndex = 0
-    private val screenShotFrequency = 1 // n of screenshot in a slot
+    private val screenShotFrequency = 10 // n of screenshot in a slot
     private val screenshotLimit = 10 //in mints
     private var idealStartTime: Instant = Instant.DISTANT_PAST
     private val postActivityInterval: Int = 600 //in second
@@ -210,11 +214,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 //            currentImageUri.value =
 //                Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray())
         }
-        sendLocalNotification(
-            "Bustle-spot Reminder",
-            "Captured screenshot",
-            imageFile = file.absolutePath
-        )
     }
 
     actual fun startScreenshotTask() {
@@ -288,9 +287,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     }
 
     actual fun getActivityData(): ActivityData {
-//        base64Converter()
         val endTime = getEndTime()
-//        val endTime = globalEventListener.lastClickTime
         val intervalInSeconds =
             endTime.epochSeconds.seconds.inWholeSeconds - startTime.epochSeconds.seconds.inWholeSeconds
         println(intervalInSeconds)
@@ -303,7 +300,8 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri =base64Converter()
+            uri = listOf(convertToBytes()),
+            clickedKeys = globalEventListener.cliked_keys.value.ifEmpty { null },
         )
         startTime = endTime
         globalEventListener.resetClickCount()
@@ -350,7 +348,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = getActivityPercentage(),
             billable = "",
             notes = "",
-            uri = base64Converter()
+//            uri = base64Converter()
         )
         storeStartTime = endTime
         return activity
@@ -375,25 +373,47 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             billable = "",
             notes = "",
             unTrackedTime = idealTime.value.toLong(),
-            uri = null //no photo for untracked activity
+            //uri = null //no photo for untracked activity
         )
         startTime = Clock.System.now()
         globalEventListener.resetClickCount()
         return activity
     }
 
-    private fun base64Converter():String {
+    fun convertToBytes(): ByteArray {
+        if (screenShot.value == null) {
+            Log.d("ScreenShot is null")
+            return ByteArray(0)
+        }
+        try {
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            ImageIO.write(screenShot.value!!.toAwtImage(), "png", byteArrayOutputStream)
+            return byteArrayOutputStream.toByteArray()
+        } catch (e: Exception) {
+            Log.d("Error converting screenshot to bytes: ${e.message}")
+            return ByteArray(0)
+        }
+    }
+
+    private fun base64Converter(): String {
 //        screenShot.value?.toString()?.let { Log.d("this is great $it") }
         return screenShot.value?.let {
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                ImageIO.write(it.toAwtImage(), "png", byteArrayOutputStream)
-                val bytes = byteArrayOutputStream.toByteArray()
-                Log.d("$bytes y")
-                Base64.getEncoder().encodeToString(bytes)
-            }.toString()
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            ImageIO.write(it.toAwtImage(), "png", byteArrayOutputStream)
+            val bytes = byteArrayOutputStream.toByteArray()
+            Log.d("$bytes y")
+            Base64.getEncoder().encodeToString(bytes)
+        }.toString()
     }
 
 
     actual var canCallApi: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var canStoreApiCall: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    actual var liveLocationCoordinate: MutableStateFlow<Coordinate> =
+        MutableStateFlow(Coordinate(0.0, 0.0))
+
+    actual fun getLocationData(): Coordinate? {
+        return null
+    }
 }

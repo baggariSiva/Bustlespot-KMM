@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BaseResponse<T>(
-    var status: String? = null,
+    var status: Boolean = false,
     var data: T? = null,
     var message: String? = null
 )

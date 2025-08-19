@@ -3,28 +3,37 @@ package org.softsuave.bustlespot.tracker.ui
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.softsuave.bustlespot.Log
+import org.softsuave.bustlespot.PlatFormType
 import org.softsuave.bustlespot.SessionManager
 import org.softsuave.bustlespot.auth.utils.Result
 import org.softsuave.bustlespot.auth.utils.UiEvent
 import org.softsuave.bustlespot.auth.utils.timeStringToSeconds
 import org.softsuave.bustlespot.data.network.models.request.UpdateActivityRequest
-import org.softsuave.bustlespot.data.network.models.response.DisplayItem
+import org.softsuave.bustlespot.data.network.models.response.OrganisationModule
 import org.softsuave.bustlespot.data.network.models.response.Project
 import org.softsuave.bustlespot.data.network.models.response.TaskData
+import org.softsuave.bustlespot.getPlatform
+import org.softsuave.bustlespot.locationmodule.LocationViewModel
 import org.softsuave.bustlespot.network.NetworkMonitor
+import org.softsuave.bustlespot.shared.SharedImage
+import org.softsuave.bustlespot.shared.toImageBitmap
 import org.softsuave.bustlespot.timer.TrackerModule
 import org.softsuave.bustlespot.tracker.data.TrackerRepository
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
-import org.softsuave.bustlespot.tracker.data.model.PostActivityRequest
-import org.softsuave.bustlespot.tracker.ui.model.GetTasksRequest
+import kotlin.math.roundToInt
 
 class HomeViewModel(
     private val sessionManager: SessionManager,
@@ -32,8 +41,12 @@ class HomeViewModel(
     private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
+    private var _platFormType: MutableStateFlow<PlatFormType> =
+        MutableStateFlow(getPlatform().platformType)
+    val platFormType = _platFormType.asStateFlow()
 
-    private val trackerModule = TrackerModule(viewModelScope)
+    private val trackerModule = TrackerModule(viewModelScope,
+        LocationViewModel())
     val trackerTime: StateFlow<Int> = trackerModule.trackerTime
     val isTrackerRunning: StateFlow<Boolean> = trackerModule.isTrackerRunning
     val idealTime: StateFlow<Int> = trackerModule.idealTime
@@ -43,56 +56,60 @@ class HomeViewModel(
     var canCallApi: MutableStateFlow<Boolean> = trackerModule.canCallApi
     var canStoreApiCall: MutableStateFlow<Boolean> = trackerModule.canStoreApiCall
     var lastSyncTime: MutableStateFlow<Long> = MutableStateFlow(0)
-//    val isNetworkAvailable: Flow<Boolean> = networkMonitor.isConnected
+    val _imageBytes: MutableStateFlow<MutableList<SharedImage?>> =
+        MutableStateFlow(mutableListOf<SharedImage?>())
+    val imageBitmap: StateFlow<List<ImageBitmap?>> = _imageBytes
+        .map { bytes ->
+            imageBytes.value = _imageBytes.value.map { it?.toByteArray() }
+            imageBytes.value.map { byteArray ->
+                byteArray?.let {
+                    toImageBitmap(it)
+                }
+            }
+        }
+        .flowOn(Dispatchers.Default)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+    val imageBytes: MutableStateFlow<List<ByteArray?>> = MutableStateFlow<List<ByteArray?>>(
+        emptyList()
+    )
+
+    fun addImageBytes(image: SharedImage?) {
+        image?.let {
+            _imageBytes.value = _imageBytes.value.toMutableList().apply { add(it) }
+        }
+    }
+
 
     fun startTrackerTimer() = trackerModule.startTimer()
 
-    private fun constructPostActivityRequest(
-        organisationId: Int,
-        activityDataOfModule: ActivityData
-    ): PostActivityRequest {
-//        val taskId = _selectedTask.value?.taskId ?: 0
-//        val projectId = _selectedProject.value?.projectId ?: 0
-//        //TODO("Need to work on startTime and endTime")
-//        val startTime = activityDataOfModule.startTime
-//        val endTime = activityDataOfModule.endTime
-//        val mouseActivity =activityDataOfModule.mouseActivity
-//        val keyboardActivity = keyboradKeyEvents.value
-//        val totalActivity = mouseActivity + keyboardActivity
-//        val notes = _selectedTask.value?.notes ?: "Activity recorded"
-//        val uri = ""
-//        val unTrackedTime = _totalIdleTime.value.toLong()
-//        val activityData = ActivityData(
-//            taskId = taskId,
-//            projectId = projectId,
-//            startTime = startTime,
-//            endTime = endTime,
-//            mouseActivity = mouseActivity,
-//            keyboardActivity = keyboardActivity,
-//            totalActivity = totalActivity,
-//            billable = "",
-//            notes = notes,
-//            orgId = organisationId,
-//            uri = uri,
-//            unTrackedTime = unTrackedTime
-//        )
 
+    private fun constructPostActivityRequest(
+        activityDataOfModule: ActivityData
+    ): ActivityData {
         activityDataOfModule.apply {
-            this.taskId = _selectedTask.value?.taskId ?: 0
-            this.projectId = _selectedProject.value?.projectId ?: 0
-            this.orgId = organisationId
+            this.taskId = _selectedTask.value?.taskId
+            this.projectId = _selectedProject.value?.projectId
+            if (_platFormType.value != PlatFormType.DESKTOP) {
+                this.uri = imageBytes.value
+                val userCoordinate = trackerModule.getLocationData()
+                this.latitude = userCoordinate?.latitude
+                this.longitude = userCoordinate?.longitude
+            }
         }
-        return PostActivityRequest(activityData = arrayListOf(activityDataOfModule))
+        _imageBytes.value = mutableListOf<SharedImage?>()
+        return activityDataOfModule
     }
 
     fun startPostingActivity(
-        organisationId: Int,
         showLoading: Boolean = false,
         doActionOnSuccess: () -> Unit = {}
     ) {
         try {
             val request = constructPostActivityRequest(
-                organisationId,
                 activityDataOfModule = trackerModule.getActivityData()
             )
             Log.d("$request----reguest")
@@ -103,25 +120,20 @@ class HomeViewModel(
     }
 
     fun storePostActivity(
-        organisationId: Int
     ) {
         try {
             val request = constructPostActivityRequest(
-                organisationId,
                 activityDataOfModule = trackerModule.getStoreActivityData()
             )
-            canStoreApiCall.value = !trackerRepository.storePostUserActivity(request)
+//            canStoreApiCall.value = !trackerRepository.storePostUserActivity(request)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    fun startPostingUntrackedActivity(
-        organisationId: Int,
-    ) {
+    fun startPostingUntrackedActivity() {
         try {
             val request = constructPostActivityRequest(
-                organisationId,
                 activityDataOfModule = trackerModule.getUntrackedActivityData()
             )
             Log.d("$request----reguest")
@@ -131,12 +143,9 @@ class HomeViewModel(
         }
     }
 
-    fun postUpdateActivity(
-        organisationId: Int
-    ) {
+    fun postUpdateActivity() {
         try {
             val request = UpdateActivityRequest(
-                organisationId,
                 trackerModule.getIdleTime()
             )
             Log.d("$request----reguest")
@@ -150,20 +159,16 @@ class HomeViewModel(
     fun resetTrackerTimer() = trackerModule.resetTimer()
     fun resumeTrackerTimer() = trackerModule.resumeTracker()
     fun updateStartTime() = trackerModule.updateStartTime()
-//    fun startScreenshotTask() = trackerModule.startScreenshotTask()
-//    fun pauseScreenshotTask() = trackerModule.pauseScreenshotTask()
-//    fun resumeScreenshotTask() = trackerModule.resumeScreenshotTask()
-//    fun stopScreenshotTask() = trackerModule.stopScreenshotTask()
+
 
     fun resetIdleTimer() = trackerModule.resetIdleTimer()
     fun updateTrackerTimer() = trackerModule.updateTrackerTimer()
-//    fun addCustomTimeForIdleTime(time: Int) = trackerModule.addCustomTimeForIdleTime(time)
 
 
     fun stopIdleTimer() = trackerModule.stopIdleTimer()
 
+    val liveLocationCoordinate = trackerModule.liveLocationCoordinate
 
-    //    private val _taskList =MutableStateFlow<List<TaskData>>(emptyList())
     private val _mainTaskList =
         MutableStateFlow<List<TaskData>>(emptyList())
     private val _mainProjectList =
@@ -179,17 +184,29 @@ class HomeViewModel(
 
     private val trackerScreenData = TrackerScreenData(true)
 
+    private val _isOnSiteSelected = MutableStateFlow<Boolean>(false)
+    val isOnSiteSelected: StateFlow<Boolean> = _isOnSiteSelected.asStateFlow()
+
+
     private val _selectedProject = MutableStateFlow<Project?>(null)
     val selectedProject: StateFlow<Project?> = _selectedProject.asStateFlow()
 
     private val _selectedTask = MutableStateFlow<TaskData?>(null)
     val selectedTask: StateFlow<TaskData?> = _selectedTask.asStateFlow()
 
-    private val _projectDropDownState = MutableStateFlow(DropDownState())
-    val projectDropDownState: StateFlow<DropDownState> = _projectDropDownState.asStateFlow()
+    private val _selectedModule = MutableStateFlow<OrganisationModule?>(null)
+    val selectedModule: StateFlow<OrganisationModule?> = _selectedModule.asStateFlow()
 
-    private val _taskDropDownState = MutableStateFlow(DropDownState())
-    val taskDropDownState: StateFlow<DropDownState> = _taskDropDownState.asStateFlow()
+    private val _moduleDropDownState = MutableStateFlow(DropDownState<OrganisationModule>())
+    val moduleDropDownState: StateFlow<DropDownState<OrganisationModule>> =
+        _moduleDropDownState.asStateFlow()
+
+    private val _projectDropDownState = MutableStateFlow(DropDownState<Project>())
+    val projectDropDownState: StateFlow<DropDownState<Project>> =
+        _projectDropDownState.asStateFlow()
+
+    private val _taskDropDownState = MutableStateFlow(DropDownState<TaskData>())
+    val taskDropDownState: StateFlow<DropDownState<TaskData>> = _taskDropDownState.asStateFlow()
 
     private val _trackerDialogState: MutableStateFlow<TrackerDialogState> =
         MutableStateFlow(TrackerDialogState())
@@ -201,13 +218,62 @@ class HomeViewModel(
     // actual is 7200ms -- 120 mins
     private val idealTimeThreshold: Int = 7200
 
-    fun getAllProjects(organisationId: String) {
+    private fun selectModuleAsPerPlatform(
+        platformType: PlatFormType
+    ) {
+        when (platformType) {
+            PlatFormType.IOS, PlatFormType.ANDROID -> {
+                val selected = _moduleDropDownState.value.dropDownList.firstOrNull {
+                    it.moduleName.contains("onsite", ignoreCase = true)
+                }
+                _selectedModule.value = selected
+                setModuleAndGetProTas(
+                    selected ?: _moduleDropDownState.value.dropDownList.firstOrNull() ?: return
+                )
+            }
+
+            PlatFormType.DESKTOP -> {
+                val selected = _moduleDropDownState.value.dropDownList.firstOrNull {
+                    it.moduleName.contains("it", ignoreCase = true)
+                }
+                _selectedModule.value = selected
+                setModuleAndGetProTas(
+                    selected ?: _moduleDropDownState.value.dropDownList.firstOrNull() ?: return
+                )
+            }
+
+            PlatFormType.UNKNOWN -> {
+                // TODO: handle unknown
+            }
+        }
+
+    }
+
+    private fun setModuleAndGetProTas(selectedModule: OrganisationModule) {
+        _moduleDropDownState.value = _moduleDropDownState.value.copy(
+            inputText = selectedModule.moduleName.toString(),
+            errorMessage = ""
+        )
+        _projectDropDownState.value = _projectDropDownState.value.copy(
+            inputText = ""
+
+        )
+        _taskDropDownState.value = _taskDropDownState.value.copy(
+            inputText = ""
+        )
+        _selectedProject.value = null
+        _selectedTask.value = null
+        resetTrackerTimer()
+        getAllProjects(selectedModule.moduleId.toString())
+    }
+
+    fun getAllModules(organisationId: String) {
         viewModelScope.launch {
-            trackerRepository.getAllProjects(organisationId).collect { result ->
+            trackerRepository.getAllModules(organisationId).collect { result ->
                 when (result) {
                     is Result.Error -> {
                         _uiEvent.value = UiEvent.Failure(result.message ?: "Unknown Error")
-                        _projectDropDownState.value = _projectDropDownState.value.copy(
+                        _moduleDropDownState.value = _moduleDropDownState.value.copy(
                             errorMessage = result.message ?: "Failed to fetch projects"
                         )
                     }
@@ -217,20 +283,46 @@ class HomeViewModel(
                     }
 
                     is Result.Success -> {
-                        val filteredList = result.data.projectLists?.filter { project ->
-                            project.users?.any { it.userId == sessionManager.userId } == true
-                        } ?: emptyList()
+                        _moduleDropDownState.update {
+                            DropDownState(
+                                dropDownList = result.data.toList<OrganisationModule>(),
+                                errorMessage = if (result.data.isEmpty()) "No modules to select" else ""
+                            )
+                        }
+                        selectModuleAsPerPlatform(_platFormType.value)
+                        _uiEvent.update { UiEvent.Success(trackerScreenData) }
+                    }
+                }
+            }
 
-                        _mainProjectList.value = filteredList
+        }
+    }
+
+    fun getAllProjects(moduleId: String) {
+        viewModelScope.launch {
+            trackerRepository.getAllProjects(moduleId).collect { result ->
+                when (result) {
+                    is Result.Error -> {
+                        _uiEvent.value = UiEvent.Failure(result.message ?: "Unknown Error")
                         _projectDropDownState.value = _projectDropDownState.value.copy(
-                            dropDownList = filteredList,
-                            errorMessage = if (result.data.projectLists.isNullOrEmpty()) "No projects to select" else ""
+                            errorMessage = result.message ?: "Failed to fetch projects"
                         )
-                        trackerScreenData.is_success
+                    }
+
+                    is Result.Loading -> {
+                        _uiEvent.value = UiEvent.Loading
+                    }
+
+                    is Result.Success -> {
+                        _mainProjectList.value = result.data
+                        _projectDropDownState.value = _projectDropDownState.value.copy(
+                            dropDownList = result.data,
+                            errorMessage = if (result.data.isEmpty()) "No projects to select" else ""
+                        )
+                        trackerScreenData.isSuccess
                         _uiEvent.update { UiEvent.Success(trackerScreenData) }
                         fetchAllTasksForProjects(
-                            projects = filteredList,
-                            organisationId
+                            projects = result.data
                         )
                     }
                 }
@@ -238,39 +330,11 @@ class HomeViewModel(
         }
     }
 
-
-//    fun fetchTasksForProject(projectId: Int, organisationId: String) {
-//        viewModelScope.launch {
-//            trackerRepository.getAllTask(
-//                GetTasksRequest(projectId = projectId.toString(), organisationId)
-//            ).collect { result ->
-//                when (result) {
-//                    is Result.Error -> {
-//                        _taskDropDownState.value = _taskDropDownState.value.copy(
-//                            errorMessage = result.message ?: "Failed to fetch tasks"
-//                        )
-//                    }
-//
-//                    is Result.Loading -> {
-//                        Log.d("Loading at projects")
-//                    }
-//
-//                    is Result.Success -> {
-//                        val taskList = result.data.taskDetails ?: emptyList()
-//                        _mainTaskList.value = _mainTaskList.value.plus(taskList)
-//                        trackerScreenData.boolen
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-
-    private fun fetchAllTasksForProjects(projects: List<Project>, organisationId: String) {
+    private fun fetchAllTasksForProjects(projects: List<Project>) {
         viewModelScope.launch {
             projects.forEach { project ->
                 trackerRepository.getAllTask(
-                    GetTasksRequest(projectId = project.projectId.toString(), organisationId)
+                    project.projectId.toString()
                 ).collect { result ->
                     when (result) {
                         is Result.Error -> {
@@ -287,7 +351,6 @@ class HomeViewModel(
                         is Result.Success -> {
                             val taskList = result.data.taskDetails
                             _mainTaskList.value = _mainTaskList.value.plus(taskList)
-                            trackerScreenData.is_success
                         }
                     }
                 }
@@ -316,7 +379,7 @@ class HomeViewModel(
     }
 
     private fun postUserActivity(
-        postActivityRequest: PostActivityRequest, showLoading: Boolean = false,
+        postActivityRequest: ActivityData, showLoading: Boolean = false,
         doActionOnSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
@@ -370,6 +433,11 @@ class HomeViewModel(
                     _taskDropDownState.value =
                         _taskDropDownState.value.copy(dropDownList = emptyList(), inputText = "")
                 }
+                if (_selectedModule.value == null) {
+                    _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                        errorMessage = "Please select the a module"
+                    )
+                }
             }
 
             is DropDownEvents.OnProjectSelection -> {
@@ -378,17 +446,15 @@ class HomeViewModel(
                     inputText = dropDownEvents.selectedProject.name,
                     errorMessage = ""
                 )
-
-                val filteredTasks =
-                    _mainTaskList.value.filter { it.projectId == dropDownEvents.selectedProject.projectId }
-                _taskDropDownState.value = _taskDropDownState.value.copy(
-                    dropDownList = filteredTasks,
-                    errorMessage = if (filteredTasks.isEmpty()) "No task available to select" else "",
-                    inputText = ""
-                )
                 _selectedTask.value = null
+                val taskList =
+                    _mainTaskList.value.filter { task -> task.projectId == _selectedProject.value?.projectId }
+                _taskDropDownState.value = _taskDropDownState.value.copy(
+                    inputText = "",
+                    dropDownList = taskList,
+                    errorMessage = if (taskList.isEmpty()) "No tasks to select" else ""
+                )
             }
-
 
             is DropDownEvents.OnTaskSearch -> {
                 if (dropDownEvents.inputText.isNotEmpty()) {
@@ -416,17 +482,24 @@ class HomeViewModel(
                     errorMessage = ""
                 )
                 trackerModule.setTrackerTime(
-                    dropDownEvents.selectedTask.time ?: 0,
-                    dropDownEvents.selectedTask.unTrackedTime ?: 0
+                    dropDownEvents.selectedTask.time.toInt(),
+                    dropDownEvents.selectedTask.unTrackedTime.toInt()
                 )
                 trackerModule.setLastScreenShotTime(
                     dropDownEvents.selectedTask.lastScreenShotTime?.timeStringToSeconds() ?: 0
                 )
-                _totalIdleTime.value = dropDownEvents.selectedTask.unTrackedTime ?: 0
+                _totalIdleTime.value = dropDownEvents.selectedTask.unTrackedTime.roundToInt()
             }
 
             is DropDownEvents.OnProjectDropDownClick -> {
-                println("Project dropdown clicked")
+                if (_selectedModule.value == null) {
+                    _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                        errorMessage = "Please select the a module"
+                    )
+                } else {
+                    _moduleDropDownState.value =
+                        _moduleDropDownState.value.copy(errorMessage = "")
+                }
             }
 
             is DropDownEvents.OnTaskDropDownClick -> {
@@ -455,6 +528,67 @@ class HomeViewModel(
                     )
                 }
             }
+
+            is DropDownEvents.OnModuleDismiss -> {
+                if (_selectedModule.value != null) {
+                    _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                        inputText = selectedModule.value?.moduleName ?: "",
+                    )
+                }
+            }
+
+            is DropDownEvents.OnModuleSearch -> {
+                _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                    inputText = dropDownEvents.inputText
+                )
+                if (dropDownEvents.inputText.isEmpty() && !isTrackerRunning.value) {
+                    _selectedModule.value = null
+                    _projectDropDownState.value =
+                        _projectDropDownState.value.copy(dropDownList = emptyList(), inputText = "")
+                }
+            }
+
+            is DropDownEvents.OnModuleSelection -> {
+                if (_selectedModule.value == dropDownEvents.selectedModule) {
+                    _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                        inputText = dropDownEvents.selectedModule.moduleName,
+                        errorMessage = ""
+                    )
+                } else {
+                    if (_platFormType.value == PlatFormType.DESKTOP) {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = true,
+                            title = "Alert",
+                            text = "Oops! '${dropDownEvents.selectedModule.moduleName}' isn’t available on desktop. Please try it on the mobile version.",
+                            confirmButtonText = "Ok",
+                            showDismissButton = false,
+                            onConfirm = {
+                                _trackerDialogState.value = _trackerDialogState.value.copy(
+                                    isDialogShown = false,
+                                )
+                            }
+                        )
+                    }
+                    if (_platFormType.value == PlatFormType.ANDROID || _platFormType.value == PlatFormType.IOS) {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = true,
+                            title = "Alert",
+                            text = "Oops! '${dropDownEvents.selectedModule.moduleName}' isn’t available on ${_platFormType.value.name.lowercase()} devices. Please try it on the desktop version.",
+                            confirmButtonText = "Ok",
+                            showDismissButton = false,
+                            onConfirm = {
+                                _trackerDialogState.value = _trackerDialogState.value.copy(
+                                    isDialogShown = false,
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            is DropDownEvents.OnModuleDropDownClick -> {
+                print("Module dropdown clicked")
+            }
         }
     }
 
@@ -464,7 +598,7 @@ class HomeViewModel(
         handleNavAction: () -> Unit = {}
     ) {
         when (trackerDialogEvents) {
-            TrackerDialogEvents.ShowExitDialog -> {
+            is TrackerDialogEvents.ShowExitDialog -> {
                 _trackerDialogState.value = _trackerDialogState.value.copy(
                     isDialogShown = true,
                     title = "Exit",
@@ -564,11 +698,11 @@ class HomeViewModel(
                 )
             }
 
-            TrackerDialogEvents.ShowTrackerAlertDialog -> {
+            is TrackerDialogEvents.ShowTrackerAlertDialog -> {
                 TODO()
             }
 
-            TrackerDialogEvents.ShowTrackerNotStartedDialog -> {
+            is TrackerDialogEvents.ShowTrackerNotStartedDialog -> {
                 _trackerDialogState.value = _trackerDialogState.value.copy(
                     isDialogShown = true,
                     title = "Alert",
@@ -579,6 +713,31 @@ class HomeViewModel(
                         _trackerDialogState.value = _trackerDialogState.value.copy(
                             isDialogShown = false
                         )
+                    },
+                    onDismiss = {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = false
+                        )
+                    }
+                )
+            }
+
+            is TrackerDialogEvents.ShowModuleChangeDialog -> {
+                _trackerDialogState.value = _trackerDialogState.value.copy(
+                    isDialogShown = true,
+                    title = "Alert",
+                    text = "Are you sure you want to stop tracker and change module?",
+                    confirmButtonText = "Yes",
+                    dismissButtonText = "No",
+                    onConfirm = {
+                        _trackerDialogState.value = _trackerDialogState.value.copy(
+                            isDialogShown = false
+                        )
+//                        updateSelectedTaskTime(trackerTime.value, idealTime.value)
+                        resetTrackerTimer()
+                        resetIdleTimer()
+                        handleNavAction()
+                        handleDropDownEvents(DropDownEvents.OnModuleSelection(trackerDialogEvents.selectedModule))
                     },
                     onDismiss = {
                         _trackerDialogState.value = _trackerDialogState.value.copy(
@@ -621,11 +780,16 @@ class HomeViewModel(
     }
 
     fun updateSelectedTaskTime(trackingTime: Int, idleTime: Int) {
-        selectedTask.value?.time = trackingTime
-        selectedTask.value?.unTrackedTime = idleTime
+        selectedTask.value?.time = trackingTime.toFloat()
+        selectedTask.value?.unTrackedTime = idleTime.toFloat()
     }
 
     private fun checkTaskAndProject(): Boolean {
+        if (_selectedModule.value == null) {
+            _moduleDropDownState.value = _moduleDropDownState.value.copy(
+                errorMessage = "Please select the a module"
+            )
+        }
         if (_selectedProject.value == null) {
             _projectDropDownState.value = _projectDropDownState.value.copy(
                 errorMessage = "Please select the a project"
@@ -637,7 +801,6 @@ class HomeViewModel(
             )
             return false
         }
-
         return true
     }
 
@@ -646,26 +809,28 @@ class HomeViewModel(
 
 
 data class TrackerScreenData(
-    val is_success: Boolean
-//    val listOfProject: MutableList<Project>?,
-//    val listOfTask: MutableList<TaskData>?
+    val isSuccess: Boolean
 )
 
 sealed class DropDownEvents {
+    data class OnModuleSearch(val inputText: String) : DropDownEvents()
     data class OnProjectSearch(val inputText: String) : DropDownEvents()
     data class OnTaskSearch(val inputText: String) : DropDownEvents()
+    data class OnModuleSelection(val selectedModule: OrganisationModule) : DropDownEvents()
     data class OnProjectSelection(val selectedProject: Project) : DropDownEvents()
     data class OnTaskSelection(val selectedTask: TaskData) : DropDownEvents()
     data object OnProjectDropDownClick : DropDownEvents()
     data object OnTaskDropDownClick : DropDownEvents()
+    data object OnModuleDropDownClick : DropDownEvents()
     data object OnProjectDismiss : DropDownEvents()
     data object OnTaskDismiss : DropDownEvents()
+    data object OnModuleDismiss : DropDownEvents()
 }
 
-data class DropDownState(
+data class DropDownState<T>(
     val errorMessage: String = "",
     val inputText: String = "",
-    val dropDownList: List<DisplayItem> = emptyList()
+    val dropDownList: List<T> = emptyList<T>()
 )
 
 
@@ -674,14 +839,18 @@ data class TrackerDialogState(
     val title: String = "",
     val text: String = "",
     val confirmButtonText: String = "",
-    val dismissButtonText: String = "",
+    val dismissButtonText: String? = "",
+    var showDismissButton: Boolean = true,
     val onConfirm: () -> Unit = {},
-    val onDismiss: () -> Unit = {}
+    val onDismiss: () -> Unit? = {}
 )
 
 sealed class TrackerDialogEvents {
     data object ShowExitDialog : TrackerDialogEvents()
     data object ShowIdleTimeDialog : TrackerDialogEvents()
+    data class ShowModuleChangeDialog(val selectedModule: OrganisationModule) :
+        TrackerDialogEvents()
+
     data class ShowProjectChangeDialog(val selectedProject: Project) : TrackerDialogEvents()
     data class ShowTaskChangeDialog(val selectedTask: TaskData) : TrackerDialogEvents()
     data object ShowTrackerNotStartedDialog : TrackerDialogEvents()

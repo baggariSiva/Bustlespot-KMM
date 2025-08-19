@@ -40,7 +40,7 @@ fun LoadingScreen() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadingDialog(
-    dialogLoadingText: String = "Loading"
+    loadingTitleText: String = "Loading"
 ) {
     BasicAlertDialog(
         onDismissRequest = { },
@@ -56,7 +56,7 @@ fun LoadingDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator(color = BustleSpotRed)
-            Text(text = dialogLoadingText,color = Color.White.copy(alpha = .7f) ,style = MaterialTheme.typography.labelMedium)
+            Text(text = loadingTitleText,color = Color.White.copy(alpha = .7f) ,style = MaterialTheme.typography.labelMedium)
         }
     }
 }

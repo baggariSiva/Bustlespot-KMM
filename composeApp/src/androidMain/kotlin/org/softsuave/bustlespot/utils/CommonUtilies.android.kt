@@ -4,9 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 
 
-actual fun isAndroid(): Boolean = true
 
 @Composable
-actual fun handleBackPress(onBack: () -> Unit) {
+actual fun HandleBackPress(onBack: () -> Unit) {
     BackHandler(onBack = onBack)
 }

@@ -2,17 +2,28 @@ package org.softsuave.bustlespot.data.network
 
 
 object APIEndpoints {
-    const val SIGNIN = "/api/auth/signin"
+/*
+    const val SIGNIN = "/api/auth/signin" // Node API
     const val SIGNOUT = "/api/auth/signout"
-
     const val GETALLORGANISATIONS ="/api/organisation/getUserOrganization"
-    const val GetOrganisation ="/organisation/get_organisation"
-
     const val GETALLPROJECTS = "/api/project/getProjectList"
-    const val GETALLTASKS = "/api/task/getTaskByProjectId"
+     const val GETALLTASKS = "/api/task/getTaskByProjectId"
+ */
 
-    const val POSTACTIVITY = "/api/activity/addActivityList"
+//    const val POSTACTIVITY = "/api/activity/addActivityList"
     const val GETALLACTIVITIES = "/api/activity/get-all-activity"
 
-    const val UPDATEACTIVITY = "/api/activity/updateActivity"
+//    const val UPDATEACTIVITY = "/api/activity/update_last_activity"
+
+
+    // python api
+    const val SIGNIN = "/auth/signin"
+    const val GETALLORGANISATIONS ="/organisation/get_all_organisation"
+    const val SIGNOUT = "/auth/signout"
+    const val GETORGANISATIONMODULES = "/module/get_all_modules"
+    const val GETALLPROJECTS = "/project/get_all_project"
+    const val GETALLTASKS = "/task/get_all_task"
+    const val POSTACTIVITY = "/activity/create-activity"
+    const val UPDATEACTIVITY = "/activity/update_last_activity"
+//    const val
 }

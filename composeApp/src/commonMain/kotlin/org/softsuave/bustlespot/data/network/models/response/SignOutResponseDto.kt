@@ -5,6 +5,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SignOutResponseDto(
-    @SerialName("message")
-    val message: String
+    @SerialName("user_id")
+    val userId: String,
+    @SerialName("session_id")
+    val sessionId: String
 )

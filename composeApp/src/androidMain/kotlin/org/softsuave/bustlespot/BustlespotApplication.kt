@@ -10,12 +10,6 @@ import org.softsuave.bustlespot.network.NetworkMonitorProvider
 
 class BustlespotApplication : Application() {
     override fun onCreate() {
-        NotifierManager.initialize(
-            configuration = NotificationPlatformConfiguration.Android(
-                notificationIconResId = R.drawable.ic_launcher_foreground,
-                showPushNotification = true,
-            )
-        )
         super.onCreate()
         NetworkMonitorProvider.init(context = this)
         initKoin {

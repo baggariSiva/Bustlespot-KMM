@@ -12,7 +12,7 @@ plugins {
     alias(libs.plugins.buildConfig)
     id("com.google.gms.google-services") version "4.4.0" apply false
     id("app.cash.sqldelight") version "2.0.2"
-
+    alias(libs.plugins.composeHotReload)
 }
 
 kotlin {
@@ -29,7 +29,6 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            //   export("io.github.mirzemehdi:kmpnotifier:1.4.0")
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts("-lsqlite3", "_sqlite3")
@@ -42,6 +41,7 @@ kotlin {
                             "-lsqlite3",
                             "_sqlite3"
                         )
+                        linkerOpts += "-framework MapKit"
                     }
             }
         }
@@ -88,6 +88,19 @@ kotlin {
 //            implementation(libs.library.base)
             implementation(libs.coroutines.extensions)
             implementation(libs.stately.common) // Needed by SQLDelight
+
+            // Geocoding
+            implementation(libs.compass.geocoder)
+//            implementation(libs.compass.geocoder.mobile)
+//
+//            // Geolocation
+            implementation(libs.compass.geolocation)
+//            implementation(libs.compass.geolocation.mobile)
+            api("io.github.mirzemehdi:kmpnotifier:1.5.1")
+
+            //kamal for image
+//            implementation("media.kamel:kamel-image:1.0.6")
+//            implementation("media.kamel:kamel-decoder-image-bitmap:1.0.6")
         }
 
         commonTest.dependencies {
@@ -110,9 +123,14 @@ kotlin {
             implementation(libs.koin.androidx.compose)
             implementation(libs.android.driver)
 
+            implementation("com.tomtom.sdk.maps:map-display:1.25.3")
+            implementation(libs.compass.geocoder.mobile)
+
+            implementation(libs.compass.geolocation.mobile)
+
             // AndroidX
             implementation(libs.androidx.startup.runtime)
-            api(libs.kmpnotifier)
+            implementation(libs.accompanist.permissions)
         }
 
         desktopMain.dependencies {
@@ -121,11 +139,12 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.jnativehook)
             implementation(libs.sqlite.driver)
-
-            api(libs.kmpnotifier)
         }
 
         nativeMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            implementation(libs.compass.geocoder.mobile)
+            implementation(libs.compass.geolocation.mobile)
             implementation(libs.ktor.client.darwin)
             implementation(libs.native.driver)
         }
@@ -150,6 +169,7 @@ buildConfig{
     forClass("BuildConfigKt"){
         buildConfigField("String", "APP_NAME", "\"${project.name}\"")
         buildConfigField("String", "APP_VERSION", "\"${project.version}\"")
+        buildConfigField("String", "TOM_TOM_MAP_KEY", "\"8KZB8zTu2dRMVPN08mwXYNo7JztLRa6N\"")
     }
 }
 android {

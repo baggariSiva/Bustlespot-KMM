@@ -5,8 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateActivityRequest(
-    @SerialName("organisationId")
-    val organisationId: Int,
     @SerialName("time")
     val time: Int
 )

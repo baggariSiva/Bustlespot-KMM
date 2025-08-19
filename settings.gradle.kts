@@ -12,6 +12,9 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url = uri("https://repositories.tomtom.com/artifactory/maven")
+        }
     }
 }
 
@@ -26,7 +29,14 @@ dependencyResolutionManagement {
         }
         mavenCentral()
         google()
+        maven {
+            url = uri("https://repositories.tomtom.com/artifactory/maven")
+        }
     }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 include(":composeApp")

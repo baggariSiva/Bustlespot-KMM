@@ -8,16 +8,20 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.softsuave.bustlespot.Log
-import org.softsuave.bustlespot.notifications.sendLocalNotification
 import org.softsuave.bustlespot.tracker.data.model.ActivityData
 import kotlin.random.Random
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import org.softsuave.bustlespot.locationmodule.LocationViewModel
+import org.softsuave.bustlespot.tracker.ui.Coordinate
 import kotlin.time.Duration.Companion.seconds
 
-actual class TrackerModule actual constructor(private val viewModelScope: CoroutineScope) {
+actual class TrackerModule actual constructor(
+    private val viewModelScope: CoroutineScope,
+    private val locationViewModel: LocationViewModel
+) {
     actual var trackerTime: MutableStateFlow<Int> = MutableStateFlow(0)
     actual var isTrackerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     actual var isIdealTimerRunning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -30,10 +34,13 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual var numberOfScreenshot: MutableStateFlow<Int> = MutableStateFlow(1)
     actual var isTrackerStarted: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    private val currentImageUri: MutableStateFlow<String> = MutableStateFlow("")
-    //    private var timer = Timer()
-    private val isIdleTaskScheduled = atomic(false)
     private val isTaskScheduled = atomic(false)
+
+
+    private var curTimeCount: Int = 0
+    private var locationRandomTime: Int = 0
+    private var userCoordinate: Coordinate = Coordinate(0.0, 0.0)
+
 
     // Jobs for the idle and tracker coroutines.
     private var idleJob: Job? = null
@@ -41,20 +48,13 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     private val screenShot = MutableStateFlow<ImageBitmap?>(null)
     actual val screenShotState: StateFlow<ImageBitmap?> = screenShot
     private val randomTime: MutableStateFlow<List<Int>> = MutableStateFlow(emptyList())
-//    private var screenshotRepeatingTask: TimerTask? = null
-//    private var screenshotOneShotTask: TimerTask? = null
-
-
-//    @Volatile
-//    private var isPaused = false
-//
-//    private var trackerTimerTask: TimerTask? = null
-//    private var idleTimerTask: TimerTask? = null
     private var trackerIndex = 0
     private val screenShotFrequency = 1
     private val screenshotLimit = 1
     private var idealStartTime: Instant = Instant.DISTANT_PAST
-    private val postActivityInterval: Int = 600 //in second
+    private val postActivityInterval: Int = 60 //in second
+    private val storeActivityInterval: Int = 60 //in second
+    private val fetchLocationInterval: Int = 6 //in second
 
     actual fun resetTimer() {
         isTrackerRunning.value = false
@@ -66,116 +66,67 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual fun getIdleTime(): Int {
         return (startTime.epochSeconds.seconds.inWholeSeconds - idealStartTime.epochSeconds.seconds.inWholeSeconds).toInt()
     }
+
     actual fun stopTimer() {
         Log.d("stopTimer")
         isTrackerRunning.value = false
         idealStartTime = Clock.System.now()
-        //   globalEventListener.unregisterListeners()
     }
 
     actual fun resumeTracker() {
         Log.d("resumeTracker")
         isTrackerRunning.value = true
-        //  globalEventListener.registerListeners()
-    }
-
-    private fun setRandomTimes(
-        randomTimes: MutableStateFlow<List<Int>>,
-        overallStart: Int,
-        overallEnd: Int,
-        numberOfIntervals: Int = 1
-    ) {
-        val totalDuration = overallEnd - overallStart
-        if (totalDuration % numberOfIntervals != 0) {
-            throw IllegalArgumentException("Interval length ($totalDuration) must be evenly divisible by $numberOfIntervals.")
-        }
-        val intervalSize = totalDuration / numberOfIntervals
-        randomTimes.value = List(numberOfIntervals) { i ->
-            val subIntervalStart = overallStart + i * intervalSize
-            val subIntervalEnd = overallStart + (i + 1) * intervalSize
-            Random.nextInt(from = subIntervalStart, until = subIntervalEnd)
-        }
     }
 
     actual fun startTimer() {
         isTrackerRunning.value = true
         isIdealTimerRunning.value = true
-        //    globalEventListener.registerListeners()
-        setRandomTimes(
-            randomTime,
-            overallStart = 0,
-            overallEnd = screenshotLimit * 60,
-            numberOfIntervals = screenShotFrequency
-        )
         trackerIndex = 0
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.keyCountFlow.collectLatest { count ->
-//                keyboradKeyEvents.emit(count)
-//                idealTime.value = 0
-//            }
-        }
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.mouseCountFlow.collectLatest { count ->
-//                mouseKeyEvents.emit(count)
-//                idealTime.value = 0
-//            }
-        }
-        viewModelScope.launch {
-//            GlobalAccessibilityEvents.mouseMotionCountFlow.collectLatest { count ->
-//                mouseMotionCount.emit(count)
-//                idealTime.value = 0
-//            }
-        }
         startTime = Clock.System.now()
         storeStartTime = Clock.System.now()
-            print("Clicked on tracker button")
-            // Idle timer coroutine (increments idealTime every second when active)
-            if (!isIdleTaskScheduled.value) {
-                isIdleTaskScheduled.value = true
-                idleJob = viewModelScope.launch {
-                    while (isActive) {
-                        delay(1000L) // wait 1 second
-                        if (isIdealTimerRunning.value) {
-                            idealTime.value += 1
+        locationRandomTime = Random.nextInt(0, postActivityInterval)
+        print("Clicked on tracker button")
+        Log.d("start Timer")
+        // Idle timer coroutine (increments idealTime every second when active)
+        viewModelScope.launch {
+            locationViewModel.getUserCurrentLocation { it ->
+                liveLocationCoordinate.value = it
+                userCoordinate = it
+            }
+        }
+        // Tracker timer coroutine (runs every second, checks for screenshot timing, etc.)
+        if (!isTaskScheduled.getAndSet(true)) {
+            trackerJob = viewModelScope.launch {
+                while (isActive) {
+                    delay(1000L) // wait 1 second
+                    if (isTrackerRunning.value) {
+                        val currentTime = Clock.System.now()
+                        val timeDifference = currentTime.epochSeconds - startTime.epochSeconds
+                        val storeTimeDifference =
+                            currentTime.epochSeconds - storeStartTime.epochSeconds
+                        if (timeDifference >= postActivityInterval) {
+                            canCallApi.value = true
+                            curTimeCount = 0
+                            locationRandomTime = Random.nextInt(0, postActivityInterval)
                         }
+                        if (curTimeCount % fetchLocationInterval == 0) {
+                                locationViewModel.getUserCurrentLocation { it ->
+                                    liveLocationCoordinate.value = it
+                                }
+                        }
+                        Log.d("$timeDifference and ${canCallApi.value}")
+                        if (curTimeCount == locationRandomTime) {
+                            locationViewModel.getUserCurrentLocation {coordinate->
+                                userCoordinate = coordinate
+                            }
+                            Log.d("location set by random $userCoordinate")
+                        }
+                        trackerTime.value++
+                        screenShotTakenTime.value++
+                        curTimeCount++
                     }
                 }
             }
-
-            // Tracker timer coroutine (runs every second, checks for screenshot timing, etc.)
-            if (!isTaskScheduled.getAndSet(true)) {
-                trackerJob = viewModelScope.launch {
-                    while (isActive) {
-                        delay(1000L) // wait 1 second
-                        if (isTrackerRunning.value) {
-                            val currentTime = Clock.System.now()
-                            val timeDifference = currentTime.epochSeconds - startTime.epochSeconds
-                            val storeTimeDifference = currentTime.epochSeconds - storeStartTime.epochSeconds
-                            if (timeDifference >= postActivityInterval) {
-                                canCallApi.value = true
-                            }
-                            Log.d("$timeDifference and ${canCallApi.value}")
-                            trackerTime.value++
-                            screenShotTakenTime.value++
-
-                            println("Current minute: ${(trackerTime.value % 3600) / 60}")
-                            println("Random times: ${randomTime.value}")
-
-                            if (trackerIndex < randomTime.value.size && trackerTime.value > randomTime.value[trackerIndex]) {
-                                //takeScreenShot()
-                                screenShotTakenTime.value = 0
-                                trackerIndex++
-
-                                if (trackerIndex == randomTime.value.size) {
-                                    val overallStart = trackerTime.value
-                                    val overallEnd = overallStart + (screenshotLimit * 60)
-                                    trackerIndex = 0
-                                    setRandomTimes(randomTime, overallStart, overallEnd, screenShotFrequency)
-                                }
-                            }
-                        }
-                    }
-                }
         }
     }
 
@@ -197,10 +148,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
 //        val bufferedImage: ImageBitmap? = screenShot.value
 //        val file = File(System.getProperty("java.io.tmpdir"), "sampleFile")
 //        ImageIO.write(bufferedImage, "png", file)
-        sendLocalNotification(
-            "Bustle-spot Remainder",
-            "Captured screen-shot", null
-        )
     }
 
     actual fun startScreenshotTask() {
@@ -266,12 +213,8 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
         val activity = ActivityData(
             startTime = startTime.toString(),
             endTime = Clock.System.now().toString(),
-            mouseActivity = mouseKeyEvents.value,
-            keyboardActivity = keyboradKeyEvents.value,
-            totalActivity = (mouseKeyEvents.value + keyboradKeyEvents.value) % 100,
             billable = "",
             notes = "",
-            uri = currentImageUri.value
         )
         startTime = Clock.System.now()
         canCallApi.value = false
@@ -288,8 +231,6 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = 0,
             billable = "",
             notes = "",
-            unTrackedTime = idealTime.value.toLong(),
-            uri = currentImageUri.value
         )
         startTime = Clock.System.now()
         mouseKeyEvents.value = 0
@@ -314,6 +255,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     }
 
     actual var canCallApi: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
     //IOS not implemented
     actual var canStoreApiCall: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
@@ -330,7 +272,7 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
             totalActivity = (mouseKeyEvents.value + keyboradKeyEvents.value) % 100,
             billable = "",
             notes = "",
-            uri = currentImageUri.value
+//            uri = currentImageUri.value
         )
         storeStartTime = Clock.System.now()
 
@@ -340,4 +282,9 @@ actual class TrackerModule actual constructor(private val viewModelScope: Corout
     actual fun updateStartTime() {
     }
 
+    actual var liveLocationCoordinate: MutableStateFlow<Coordinate>  = MutableStateFlow(userCoordinate)
+
+    actual fun getLocationData(): Coordinate? {
+        return userCoordinate
+    }
 }

@@ -43,13 +43,14 @@
 androidDriver = "2.0.2"
 jnativehook = "2.2.2"
 kmpnotifier = "1.4.0"
-kotlin = "2.1.0"
+kotlin = "2.1.20"
 compose = "1.7.3"
 agp = "8.6.1"
 androidx-activityCompose = "1.9.3"
 androidx-uiTest = "1.7.4"
 kermit = "2.0.5"
 kotlinx-coroutines = "1.10.1"
+kotlinxCoroutinesCore = "1.7.3"
 ktor = "3.0.3"
 androidx-lifecycle = "2.8.4"
 androidx-navigation = "2.8.0-alpha10"
@@ -69,6 +70,11 @@ coroutinesExtensions = "2.0.2"
 statelyCommon = "2.0.5"
 adaptiveAndroid = "1.0.0"
 workRuntimeKtx = "2.10.0"
+compass = "1.2.2"
+accompanist-permissions = "0.32.0"
+composeHotReload = "1.0.0-beta05"
+
+
 [libraries]
 
 android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "androidDriver" }
@@ -121,6 +127,12 @@ coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", 
 stately-common = { module = "co.touchlab:stately-common", version.ref = "statelyCommon" }
 androidx-adaptive-android = { group = "androidx.compose.material3.adaptive", name = "adaptive-android", version.ref = "adaptiveAndroid" }
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workRuntimeKtx" } # (needed by SQLDeligt)
+compass-geocoder = { module = "dev.jordond.compass:geocoder", version.ref = "compass" }
+compass-geocoder-mobile = { module = "dev.jordond.compass:geocoder-mobile", version.ref = "compass" }
+compass-geolocation = { module = "dev.jordond.compass:geolocation", version.ref = "compass" }
+compass-geolocation-mobile = { module = "dev.jordond.compass:geolocation-mobile", version.ref = "compass" }
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist-permissions" }
+
 
 [plugins]
 
@@ -130,6 +142,7 @@ compose = { id = "org.jetbrains.compose", version.ref = "compose" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
+composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload"}
 
 
 [bundles]

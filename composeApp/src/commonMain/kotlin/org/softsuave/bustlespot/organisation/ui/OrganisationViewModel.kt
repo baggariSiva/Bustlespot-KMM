@@ -11,7 +11,7 @@ import org.softsuave.bustlespot.Log
 import org.softsuave.bustlespot.auth.SignOutUseCase
 import org.softsuave.bustlespot.auth.utils.Result
 import org.softsuave.bustlespot.auth.utils.UiEvent
-import org.softsuave.bustlespot.data.network.models.response.GetAllOrganisations
+import org.softsuave.bustlespot.data.network.models.response.Organisation
 import org.softsuave.bustlespot.data.network.models.response.SignOutResponseDto
 import org.softsuave.bustlespot.organisation.data.OrganisationRepository
 import org.softsuave.bustlespot.tracker.data.TrackerRepository
@@ -22,15 +22,16 @@ class OrganisationViewModel(
     private val signOutUseCase: SignOutUseCase
 ) : ViewModel() {
 
-    private val _organisationList: MutableStateFlow<GetAllOrganisations?> = MutableStateFlow(null)
-    val organisationList: StateFlow<GetAllOrganisations?> = _organisationList.asStateFlow()
+    private val _organisationList: MutableStateFlow<List<Organisation>> =
+        MutableStateFlow(emptyList())
+    val organisationList: StateFlow<List<Organisation>> = _organisationList.asStateFlow()
 
     private val _logOutEvent: MutableStateFlow<UiEvent<SignOutResponseDto>?> =
         MutableStateFlow(null)
     val logOutEvent: StateFlow<UiEvent<SignOutResponseDto>?> = _logOutEvent.asStateFlow()
-    private val _uiEvent: MutableStateFlow<UiEvent<GetAllOrganisations>> =
+    private val _uiEvent: MutableStateFlow<UiEvent<List<Organisation>>> =
         MutableStateFlow(UiEvent.Loading)
-    val uiEvent: StateFlow<UiEvent<GetAllOrganisations>> = _uiEvent.asStateFlow()
+    val uiEvent: StateFlow<UiEvent<List<Organisation>>> = _uiEvent.asStateFlow()
 
     private val _showLogOutDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showLogOutDialog: StateFlow<Boolean> = _showLogOutDialog.asStateFlow()
