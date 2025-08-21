@@ -30,6 +30,10 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -149,6 +153,13 @@ fun TrackerScreen(
             }
         }
     )
+
+    LifecycleEventEffect(
+        Lifecycle.Event.ON_STOP,
+    ){
+        homeViewModel.showNotification()
+    }
+
     LaunchedEffect(key1 = Unit) {
         homeViewModel.checkAndPostActivities()
         scheduleWork(

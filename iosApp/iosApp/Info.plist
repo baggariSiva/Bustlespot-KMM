@@ -60,5 +60,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSUserNotificationUsageDescription</key>
+    <string>This app needs notification permission to send you reminders</string>
 </dict>
 </plist>

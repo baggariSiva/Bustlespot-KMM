@@ -23,6 +23,7 @@ import org.softsuave.bustlespot.SessionManager
 import org.softsuave.bustlespot.auth.utils.Result
 import org.softsuave.bustlespot.auth.utils.UiEvent
 import org.softsuave.bustlespot.auth.utils.timeStringToSeconds
+import org.softsuave.bustlespot.background.NotificationManager
 import org.softsuave.bustlespot.background.PostingActivityService
 import org.softsuave.bustlespot.background.PostingServiceManager
 import org.softsuave.bustlespot.data.network.models.request.UpdateActivityRequest
@@ -91,6 +92,33 @@ class HomeViewModel(
         }
     }
 
+    val notificationManager = NotificationManager()
+
+    init {
+//        viewModelScope.launch {
+//            notificationManager.requestPermission()
+//        }
+//        viewModelScope.launch {
+//            notificationManager.scheduleNotification(
+//                id = "tracker_notification",
+//                title = "Tracker Started",
+//                body = "Your tracker has been started successfully.",
+//                delayInSeconds = 5
+//            )
+//        }
+    }
+
+     fun showNotification() {
+        viewModelScope.launch {
+            notificationManager.scheduleNotification(
+                id = "tracker_notification",
+                title = "Tracker Notification",
+                body = "Your tracker is running.",
+                delayInSeconds = 5
+            )
+        }
+    }
+
     suspend fun startNotificationUpdated() {
         postingServiceManager.currentState?.collectLatest {
             when (it) {
@@ -153,6 +181,7 @@ class HomeViewModel(
             )
             Log.d("$request----reguest")
             postUserActivity(request, showLoading, doActionOnSuccess)
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
