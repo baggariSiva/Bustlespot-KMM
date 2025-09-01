@@ -180,7 +180,7 @@ class HomeViewModel(
                 activityDataOfModule = trackerModule.getActivityData()
             )
             Log.d("$request----reguest")
-            postUserActivity(request, showLoading, doActionOnSuccess)
+//            postUserActivity(request, showLoading, doActionOnSuccess)
 
         } catch (e: Exception) {
             e.printStackTrace()

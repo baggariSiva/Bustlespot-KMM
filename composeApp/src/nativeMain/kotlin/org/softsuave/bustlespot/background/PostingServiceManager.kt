@@ -6,7 +6,7 @@ import org.softsuave.bustlespot.utils.ActivityServiceState
 
 actual class PostingServiceManager {
 
-    actual val currentState: StateFlow<ActivityServiceState>?
+    actual val currentState: StateFlow<ActivityServiceState>
         get() = PostingActivityServiceIOS.currentState
 
     actual fun startPosting(

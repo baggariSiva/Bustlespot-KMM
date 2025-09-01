@@ -76,7 +76,7 @@ object PostingActivityServiceIOS : KoinComponent {
 
     // Send timer state
     private var sendElapsedMillis: Long = 0L
-    private val sendIntervalMillis: Long = 10 * 60 * 1000L // 10 minutes
+    private val sendIntervalMillis: Long = 1 * 60 * 1000L // 10 minutes
     private val sendTickMillis: Long = 1000L // 1 second tick
 
     // ISO date formatter function
@@ -106,7 +106,9 @@ object PostingActivityServiceIOS : KoinComponent {
         // Setup delegate callbacks
         locationDelegate.onLocationUpdate = { location ->
             currentLocation = location
-            NSLog("Location updated: ${location.coordinate.useContents { latitude }}, ${location.coordinate.useContents { longitude }}")
+            location.coordinate.useContents {
+                NSLog("Location updated: ${latitude}, ${longitude}")
+            }
         }
 
         locationDelegate.onLocationError = { error ->
@@ -165,10 +167,10 @@ object PostingActivityServiceIOS : KoinComponent {
 
         startBackgroundTask()
         requestLocationPermission()
-        startTimerUpdates()
+//        startTimerUpdates()
         startLocationTracking()
 
-        showNotification("Activity Tracker Started", "Location tracking is now active")
+        updateNotification("Activity Tracker Started", "Location tracking is now active")
         onStart.invoke()
     }
 
@@ -187,7 +189,7 @@ object PostingActivityServiceIOS : KoinComponent {
         pausedTime = 0L
         initialTime = 0L
 
-        showNotification("Activity Tracker Stopped", "Location tracking has been stopped")
+        updateNotification("Activity Tracker Stopped", "Location tracking has been stopped")
     }
 
     fun pauseService() {
@@ -203,7 +205,8 @@ object PostingActivityServiceIOS : KoinComponent {
         timerJob?.cancel()
         locationJob?.cancel()
 
-        showNotification("Activity Tracker Paused", "Location tracking is paused")
+        val formattedTime = formatTime(getCurrentElapsedTime())
+        updateNotificationForPausedState(formattedTime)
     }
 
     fun resumeService() {
@@ -222,7 +225,7 @@ object PostingActivityServiceIOS : KoinComponent {
         startTimerUpdates()
         startLocationTracking()
 
-        showNotification("Activity Tracker Resumed", "Location tracking has resumed")
+        updateNotification("Activity Tracker Resumed", "Location tracking has resumed")
     }
 
     fun forceSendNow() {
@@ -289,13 +292,8 @@ object PostingActivityServiceIOS : KoinComponent {
                 val currentElapsed = getCurrentElapsedTime()
                 val formattedTime = formatTime(currentElapsed)
 
-                // Update notification periodically (every 30 seconds to avoid spam)
-                if (currentElapsed % 30000 < 1000) {
-                    showNotification(
-                        "Activity Tracker - $formattedTime",
-                        "Location tracking active"
-                    )
-                }
+                // Update notification every second with current time (like Android version)
+                updateNotificationForRunningState(formattedTime)
 
                 delay(1000)
             }
@@ -392,7 +390,24 @@ object PostingActivityServiceIOS : KoinComponent {
         }
     }
 
-    private fun showNotification(title: String, message: String) {
+    // Notification management - use a single persistent notification
+    private val NOTIFICATION_ID = "location_tracking_notification"
+
+    private fun updateNotificationForRunningState(formattedTime: String) {
+        updateNotification(
+            "Activity Tracker - $formattedTime",
+            "Location tracking active"
+        )
+    }
+
+    private fun updateNotificationForPausedState(formattedTime: String) {
+        updateNotification(
+            "Activity Tracker - $formattedTime (Paused)",
+            "Location tracking paused"
+        )
+    }
+
+    private fun updateNotification(title: String, message: String) {
         val content = UNMutableNotificationContent().apply {
             setTitle(title)
             setBody(message)
@@ -400,14 +415,14 @@ object PostingActivityServiceIOS : KoinComponent {
         }
 
         val request = UNNotificationRequest.requestWithIdentifier(
-            identifier = "location_tracking_${Random.nextInt()}",
+            identifier = NOTIFICATION_ID, // Use consistent identifier
             content = content,
             trigger = null // Immediate delivery
         )
 
         UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
             error?.let {
-                NSLog("Failed to show notification: ${error.localizedDescription}")
+                NSLog("Failed to update notification: ${error.localizedDescription}")
             }
         }
     }
